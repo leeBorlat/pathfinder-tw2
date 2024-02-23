@@ -6,10 +6,13 @@ document.getElementById('generateMazeBtn')?.addEventListener('click', () => {
   // Parameters for maze generation - these could be dynamic or static
   const width = 120; // including the borders
   const height = 60; // including the borders
-  const wallPercentage = 30; // 30% of the inner maze will be walls
-
-  // Generate a new maze
+  // Retrieve the randomizer percentage value from the input
+  const randomizerInput = <HTMLInputElement>document.getElementById("randomizer-percentage");
+  const wallPercentage = randomizerInput.value ? parseInt(randomizerInput.value) : 30; // Default to 30 if no input
+  
+  // Generate a new maze using the dynamic wallPercentage
   const mazeString = generateRandomMazeWithBorder(width, height, wallPercentage);
+
 
   // Split the maze string into an array of strings, each representing a row in the maze
   const mazeData = mazeString.split("\n");

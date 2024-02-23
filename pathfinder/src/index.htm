@@ -104,6 +104,9 @@
           color: black;
         }
 
+        .labels p {
+          margin: 0;
+        }
         .tooltip {
           position: relative;
           display: inline-block;
@@ -152,6 +155,28 @@
           border: none;
           border-radius: 8px;
         }
+
+        .icon {
+          display: inline-block;
+          width: 25px;
+          height: 25px;
+          margin-right: 5px;
+          vertical-align: middle;
+          border: 3px solid black;
+        }
+
+.start-icon {
+  background-color: green;
+}
+
+.goal-icon {
+  background-color: red;
+}
+
+.path-icon {
+  background-color: yellow;
+}
+
       }
     </style>
     <meta name="description" content="" />
@@ -192,12 +217,20 @@
         <button class="clrBtn">Clear</button>
       </div>
       <br /><br />
+      <div class="labels">
+        <p>Start Node: <span class="icon start-icon"></span></p>
+        <p>Goal Node: <span class="icon goal-icon"></span></p>
+        <p>Path: <span class="icon path-icon"></span></p>
+      </div>
       <div class="randomizer">
-        <p>Randomizer Percentage:</p>
-        <input type="number" id="randomizer-percentage" class="prcnt" /><br />
+        <p>Wall Percentage:</p>
+        <input type="number" id="randomizer-percentage" class="prcnt" value="0" /><br />
         <button id="generateMazeBtn" class="randomBtn">Generate Maze</button>
       </div>
     </div>
+    <script>
+      
+    </script>
     <script src="grid.js"></script>
     <div id="output"></div>
     <script src="" async defer></script>

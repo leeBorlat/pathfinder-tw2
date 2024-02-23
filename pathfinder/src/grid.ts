@@ -32,3 +32,4 @@ const paintCells = (cells: Cell[], fillStyle: string) => {
   });
 };
 export { maze, paintCells };
+

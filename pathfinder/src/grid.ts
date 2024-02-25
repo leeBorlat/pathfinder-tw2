@@ -31,5 +31,4 @@ const paintCells = (cells: Cell[], fillStyle: string) => {
     );
   });
 };
-export { maze, paintCells };
-
+export { maze, paintCells, Cell }; // Export the Cell interface

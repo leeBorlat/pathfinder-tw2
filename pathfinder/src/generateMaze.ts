@@ -34,9 +34,8 @@ export function generateRandomMazeWithBorder(
   return maze.map((row) => row.join("")).join("\n");
 }
 
-
-const width = 120; // including the borders
-const height = 60; // including the borders
+const width = 121; // including the borders
+const height = 61; // including the borders
 const wallPercentage = 0; // 0% of the inner maze will be walls
 
 export const mazeString = generateRandomMazeWithBorder(

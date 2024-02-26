@@ -187,6 +187,9 @@
       .path-icon {
         background-color: yellow;
       }
+      .explored-icon {
+        background-color: blue;
+      }
     </style>
     <meta name="description" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -201,7 +204,7 @@
     <div id="panel">
       <h2>Pathfinding Visualizer</h2>
       <p>Path length:</p>
-      <input type="text" disabled class="disabled" /><br />
+      <input type="text" disabled class="disabled" id="path-length"/><br />
       <p>No. of Visited Nodes:</p>
       <input type="text" disabled class="disabled" /><br />
       <p>Time:</p>
@@ -221,9 +224,9 @@
         >
       </p>
       <div class="buttons">
-        <button class="findBtn">Find Path</button>
+        <button class="findBtn" id="find-path">Find Path</button>
         <button class="resetBtn">Reset Path</button>
-        <button class="clrBtn">Clear</button>
+        <button class="clrBtn" id ="clear-button">Clear</button>
       </div>
       <br /><br />
       <div class="labels">
@@ -246,6 +249,7 @@
         </p>
         <br /><br />
         <p>Path: <span class="icon path-icon"></span></p>
+        <p>Explored: <span class="icon explored-icon"></span></p>
       </div>
       <div class="randomizer">
         <p>Wall Percentage:</p>

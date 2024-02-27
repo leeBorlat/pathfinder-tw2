@@ -150,22 +150,35 @@ interface Node extends Cell {
 const heuristicManhattan = (source: Node, target: Node) => {
   return Math.abs(source.x - target.x) + Math.abs(source.y - target.y);
 };
+
+const heuristicEuclidean = (source: Node, target: Node) => {
+  return Math.sqrt(
+    Math.pow(target.x - source.x, 2) + Math.pow(target.y - source.y, 2)
+  );
+};
+
 const successors = (currentNode: Node, goalNode: Node): Node[] => {
   const adjacent = [
-    { x: 0, y: -1 },
-    { x: 0, y: 1 },
-    { x: -1, y: 0 },
-    { x: 1, y: 0 },
+    { x: 0, y: -1 }, //Up
+    { x: 0, y: 1 }, //Down
+    { x: -1, y: 0 }, //Left
+    { x: 1, y: 0 }, //Right
+    { x: -1, y: -1 }, // Up-Left
+    { x: 1, y: -1 }, // Up-Right
+    { x: -1, y: 1 }, // Down-Left
+    { x: 1, y: 1 }, // Down-Right
   ];
+
   const successorNodes = adjacent
     .map((node) => getNode(currentNode.x + node.x, currentNode.y + node.y))
     .filter((node) => node !== null)
     .filter(({ wall }) => !wall);
+
   return successorNodes.map((successor) => ({
     ...successor,
     previous: currentNode,
     totalCost: (currentNode.totalCost || 0) + 1,
-    heuristic: heuristicManhattan(currentNode, goalNode),
+    heuristic: heuristicManhattan(successor, goalNode),
   }));
 };
 
@@ -188,6 +201,12 @@ const getPath = (node: Node): Node[] => {
     : [{ ...node }];
 };
 
+//Check if next node is worse or not
+const isWorseDuplicate = (source: Node, target: Node) => {
+  return isSameLocation(source, target) && !isNodeBetter(source, target);
+};
+
+//Stock Algo
 const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
   const fringe = [startNode];
   const explored: Cell[] = [];
@@ -224,7 +243,7 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
     successorNodes.forEach((suc) => {
       if (
         [...explored, ...fringe].some((exploredNode) =>
-          isSameLocation(suc, exploredNode)
+          isWorseDuplicate(suc, exploredNode)
         )
       )
         return;
@@ -258,6 +277,152 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
   return `Path not found`;
 };
 
+//Trad GBFS Algo
+const greedyBestFirstSearch = async (
+  startNode: Cell,
+  goalNode: Cell
+): Promise<string> => {
+  const fringe = [startNode];
+  const explored: Cell[] = [];
+  let thisNode;
+
+  while (fringe.length > 0) {
+    fringe.sort(
+      (a, b) =>
+        heuristicEuclidean(a, goalNode) - heuristicEuclidean(b, goalNode)
+    );
+    thisNode = fringe.shift();
+
+    // Have we reached the goal
+    if (isSameLocation(thisNode, goalNode)) {
+      const foundPath = getPath(thisNode);
+      const pathLengthInput = document.getElementById("path-length");
+      if (pathLengthInput instanceof HTMLInputElement) {
+        // Type guard to ensure it's an input element
+        pathLengthInput.value = foundPath.length.toString(); // Correctly update the value
+      }
+
+      // Repaint the path cells
+      paintCells(
+        foundPath.filter(
+          (node) =>
+            !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+        ),
+        "yellow"
+      );
+
+      return `Found path with length ${foundPath.length}`;
+    }
+    // Mark as explored
+    explored.push({ ...thisNode });
+
+    const successorNodes = successors(thisNode, goalNode);
+
+    successorNodes.forEach((suc) => {
+      if (
+        [...explored, ...fringe].some((exploredNode) =>
+          isWorseDuplicate(suc, exploredNode)
+        )
+      )
+        return;
+
+      fringe.push(suc);
+    });
+
+    paintCells(
+      explored.filter(
+        (node) =>
+          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+      ),
+      "#00f"
+    );
+    paintCells(
+      fringe.filter(
+        (node) =>
+          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+      ),
+      "pink"
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  return `Path not found`;
+};
+
+//Function to Reset path
+function resetPath() {
+  const canvas = <HTMLCanvasElement>document.getElementById("canvas");
+  const context = canvas.getContext("2d");
+
+  // Clear the canvas
+  context?.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Repaint the maze walls and paths
+  const walls = maze.flat().filter(({ wall }) => wall);
+  const paths = maze.flat().filter(({ wall }) => !wall);
+
+  paintCells(walls, "#000");
+  paintCells(paths, "#fff");
+
+  // Repaint the start and goal nodes
+  paintCells([startNode], "green");
+  paintCells([goalNode], "red");
+
+  // Reset the explored and fringe cells
+  paintCells(
+    maze
+      .flat()
+      .filter(
+        ({ wall }) =>
+          !wall &&
+          !isSameLocation(startNode, { x: 1, y: 1, wall: false }) &&
+          !isSameLocation(goalNode, { x: 119, y: 59, wall: false })
+      ),
+    "#fff"
+  );
+}
+
+//Function to Clear everything in the Canvas
+function clearAll() {
+  //Insert code here idk pa.
+}
+
+//For HTML Interactions
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("find-path").addEventListener("click", function () {
+    const algorithmSelector = document.querySelector(
+      ".drpdwnAlgo"
+    ) as HTMLSelectElement;
+    const selectedAlgorithm = algorithmSelector.value;
+
+    if (selectedAlgorithm === "optimalPath") {
+      pathFind(startNode, goalNode).then((result) => {
+        const output = document.getElementById("output");
+        if (output) {
+          output.innerText = result;
+        }
+      });
+    } else if (selectedAlgorithm === "tradGBFS") {
+      greedyBestFirstSearch(startNode, goalNode).then((result) => {
+        const output = document.getElementById("output");
+        if (output) {
+          output.innerText = result;
+        }
+      });
+    } else {
+      alert("Please select an option to run the pathfinding algorithm.");
+    }
+  });
+
+  document.getElementById("reset-path").addEventListener("click", () => {
+    resetPath();
+  });
+
+  document.getElementById("clear-button").addEventListener("click", () => {
+    resetPath();
+  });
+});
+
 //The Random Coder template code for pathfinding
 // const newLocal = pathFind(
 //   { x: 1, y: 1, wall: false },
@@ -267,11 +432,3 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
 //   output.innerText = result;
 // }
 // );
-document.getElementById("find-path").addEventListener("click", function () {
-  pathFind(startNode, goalNode).then((result) => {
-    const output = document.getElementById("output");
-    if (output) {
-      output.innerText = result;
-    }
-  });
-});

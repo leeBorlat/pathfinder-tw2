@@ -143,11 +143,14 @@ const getNode = (x: number, y: number) => {
 
 interface Node extends Cell {
   previous?: Node;
-  // totalCost?: number;
-  // heuristic?: number;
+  totalCost?: number;
+  heuristic?: number;
 }
 
-const successors = (currentNode: Cell): Node[] => {
+const heuristicManhattan = (source: Node, target: Node) => {
+  return Math.abs(source.x - target.x) + Math.abs(source.y - target.y);
+};
+const successors = (currentNode: Node, goalNode: Node): Node[] => {
   const adjacent = [
     { x: 0, y: -1 },
     { x: 0, y: 1 },
@@ -161,11 +164,22 @@ const successors = (currentNode: Cell): Node[] => {
   return successorNodes.map((successor) => ({
     ...successor,
     previous: currentNode,
+    totalCost: (currentNode.totalCost || 0) + 1,
+    heuristic: heuristicManhattan(currentNode, goalNode),
   }));
 };
 
 const isSameLocation = (source: Cell, target: Cell) => {
   return source.x === target.x && source.y === target.y;
+};
+
+const isNodeBetter = (source: Node, target: Node) => {
+  return (
+    source.totalCost + source.heuristic < target.totalCost + target.heuristic ||
+    (source.totalCost + source.heuristic ===
+      target.totalCost + target.heuristic &&
+      source.heuristic < target.heuristic)
+  );
 };
 
 const getPath = (node: Node): Node[] => {
@@ -205,7 +219,7 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
     // Mark as explored
     explored.push({ ...thisNode });
 
-    const successorNodes = successors(thisNode);
+    const successorNodes = successors(thisNode, goalNode);
 
     successorNodes.forEach((suc) => {
       if (
@@ -214,6 +228,13 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
         )
       )
         return;
+
+      for (let i = 0; i < fringe.length; i++) {
+        if (isNodeBetter(suc, fringe[i])) {
+          fringe.splice(i, 0, suc);
+          return;
+        }
+      }
       fringe.push(suc);
     });
 

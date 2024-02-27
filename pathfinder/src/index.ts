@@ -99,7 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
   generateAndRenderMaze(0);
 });
 
-
 document.getElementById("generateMazeBtn")?.addEventListener("click", () => {
   const randomizerInput = <HTMLInputElement>(
     document.getElementById("randomizer-percentage")
@@ -135,7 +134,7 @@ document
   });
 
 const getNode = (x: number, y: number) => {
-  if (x < 0 || x >= maze[0].length || y< 0 || y >= maze.length) {
+  if (x < 0 || x >= maze[0].length || y < 0 || y >= maze.length) {
     // Out of bounds
     return null;
   }
@@ -144,21 +143,22 @@ const getNode = (x: number, y: number) => {
 
 interface Node extends Cell {
   previous?: Node;
+  // totalCost?: number;
+  // heuristic?: number;
 }
 
 const successors = (currentNode: Cell): Node[] => {
-
   const adjacent = [
-    {x: 0, y: -1},
-    {x: 0, y: 1},
-    {x: -1, y: 0},
-    {x: 1, y: 0},
+    { x: 0, y: -1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+    { x: 1, y: 0 },
   ];
   const successorNodes = adjacent
     .map((node) => getNode(currentNode.x + node.x, currentNode.y + node.y))
-    .filter(node => node !== null)
-    .filter (({ wall }) => !wall);
-  return successorNodes.map(successor => ({
+    .filter((node) => node !== null)
+    .filter(({ wall }) => !wall);
+  return successorNodes.map((successor) => ({
     ...successor,
     previous: currentNode,
   }));
@@ -168,14 +168,13 @@ const isSameLocation = (source: Cell, target: Cell) => {
   return source.x === target.x && source.y === target.y;
 };
 
-const getPath = (node: Node) : Node[]  => {
+const getPath = (node: Node): Node[] => {
   return node.previous
-  ?  [{ ...node }, ...getPath(node.previous)]
-  :  [{ ...node}];
+    ? [{ ...node }, ...getPath(node.previous)]
+    : [{ ...node }];
 };
 
-const pathFind = async(startNode: Cell, goalNode: Cell): Promise<string>=> {
-  
+const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
   const fringe = [startNode];
   const explored: Cell[] = [];
   let thisNode;
@@ -183,35 +182,60 @@ const pathFind = async(startNode: Cell, goalNode: Cell): Promise<string>=> {
   do {
     thisNode = fringe.shift();
 
-    //Have we reached the goal
-    if (isSameLocation(thisNode, goalNode)){
+    // Have we reached the goal
+    if (isSameLocation(thisNode, goalNode)) {
       const foundPath = getPath(thisNode);
       const pathLengthInput = document.getElementById("path-length");
-      if (pathLengthInput instanceof HTMLInputElement) { // Type guard to ensure it's an input element
+      if (pathLengthInput instanceof HTMLInputElement) {
+        // Type guard to ensure it's an input element
         pathLengthInput.value = foundPath.length.toString(); // Correctly update the value
       }
+
+      // Repaint the path cells
+      paintCells(
+        foundPath.filter(
+          (node) =>
+            !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+        ),
+        "yellow"
+      );
+
       return `Found path with length ${foundPath.length}`;
     }
     // Mark as explored
-    explored.push({...thisNode });
+    explored.push({ ...thisNode });
 
     const successorNodes = successors(thisNode);
 
     successorNodes.forEach((suc) => {
-      if([...explored,...fringe].some(exploredNode => isSameLocation(suc, exploredNode)))
+      if (
+        [...explored, ...fringe].some((exploredNode) =>
+          isSameLocation(suc, exploredNode)
+        )
+      )
         return;
       fringe.push(suc);
     });
 
-    paintCells(explored.filter(node => !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)), "#00f");
-    paintCells(fringe.filter(node => !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)), "pink");
-    paintCells((getPath(thisNode)).filter(node => !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)), "yellow");
+    paintCells(
+      explored.filter(
+        (node) =>
+          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+      ),
+      "#00f"
+    );
+    paintCells(
+      fringe.filter(
+        (node) =>
+          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+      ),
+      "pink"
+    );
     await new Promise((resolve) => setTimeout(resolve, 0));
   } while (fringe.length > 0 && fringe.length < 1000000);
 
   return `Path not found`;
 };
-
 
 //The Random Coder template code for pathfinding
 // const newLocal = pathFind(
@@ -222,7 +246,7 @@ const pathFind = async(startNode: Cell, goalNode: Cell): Promise<string>=> {
 //   output.innerText = result;
 // }
 // );
-document.getElementById("find-path").addEventListener("click", function() {
+document.getElementById("find-path").addEventListener("click", function () {
   pathFind(startNode, goalNode).then((result) => {
     const output = document.getElementById("output");
     if (output) {
@@ -230,4 +254,3 @@ document.getElementById("find-path").addEventListener("click", function() {
     }
   });
 });
-

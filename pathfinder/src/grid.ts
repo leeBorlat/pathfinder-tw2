@@ -14,7 +14,7 @@ const maze = mazeData.map((row, rowIndex) => {
   }));
 });
 
-const cellSize = 15.5;
+const cellSize = 15;
 const canvas = <HTMLCanvasElement>document.getElementById("canvas");
 canvas.width = maze[0].length * cellSize;
 canvas.height = maze.length * cellSize;
@@ -24,11 +24,12 @@ const paintCells = (cells: Cell[], fillStyle: string) => {
   context.fillStyle = fillStyle;
   cells.forEach((cell) => {
     context.fillRect(
-      cell.x * cellSize + 1,
-      cell.y * cellSize + 1,
-      cellSize - 2,
-      cellSize - 2
+      cell.x * cellSize,
+      cell.y * cellSize,
+      cellSize - 1,
+      cellSize - 1
     );
   });
 };
-export { maze, paintCells, Cell }; // Export the Cell interface
+export { Cell, maze, paintCells }; // Export the Cell interface
+

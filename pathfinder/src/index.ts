@@ -5,6 +5,7 @@ let startNode = { x: 1, y: 1, wall: false }; // Default start node position
 let goalNode = { x: 119, y: 59, wall: false }; // Default goal node position
 let prevStartNode: Cell | null = null; // Previous start node position
 let prevGoalNode: Cell | null = null; // Previous goal node position
+let startTime: number | undefined; // Declare startTime as number or undefined
 
 // Function to generate and render maze based on wall percentage
 function generateAndRenderMaze(wallPercentage: number) {
@@ -210,21 +211,35 @@ const isWorseDuplicate = (source: Node, target: Node) => {
 const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
   const fringe = [startNode];
   const explored: Cell[] = [];
+  
   let thisNode;
 
   do {
-    thisNode = fringe.shift();
 
+    thisNode = fringe.shift();
+    
     // Have we reached the goal
     if (isSameLocation(thisNode, goalNode)) {
+      const endTime = performance.now(); // Capture end time when the goal is found
+      const duration = (endTime - startTime); // Calculate duration in milliseconds
+      const minutes = Math.floor((duration / 1000) / 60).toString().padStart(2, '0'); // Convert to minutes and format
+      const seconds = Math.floor((duration / 1000) % 60).toString().padStart(2, '0'); // Get remaining seconds and format
+      const milliseconds = Math.floor(duration % 1000).toString().padStart(3, '0'); // Correctly get full milliseconds in three digits
+    
+      // For consistency and if you only need two digits for milliseconds, consider using only the first two digits
+      // However, displaying full milliseconds (three digits) is more common for precise timing
+      const displayMilliseconds = milliseconds.substring(0, 2); // Taking first two digits for MM:SS.mm format if desired
+    
       const foundPath = getPath(thisNode);
       const pathLengthInput = document.getElementById("path-length");
-      if (pathLengthInput instanceof HTMLInputElement) {
-        // Type guard to ensure it's an input element
-        pathLengthInput.value = foundPath.length.toString(); // Correctly update the value
+      const pathTimeInput = document.getElementById("path-time"); // Get the path-time input element
+      
+      if (pathLengthInput instanceof HTMLInputElement && pathTimeInput instanceof HTMLInputElement) {
+        pathLengthInput.value = foundPath.length.toString(); // Update the path length value
+        pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`; // Update the path time value in MM:SS.mm format
       }
-
-      // Repaint the path cells
+    
+    // Repaint the path cells
       paintCells(
         foundPath.filter(
           (node) =>
@@ -287,6 +302,7 @@ const greedyBestFirstSearch = async (
   let thisNode;
 
   while (fringe.length > 0) {
+    
     fringe.sort(
       (a, b) =>
         heuristicEuclidean(a, goalNode) - heuristicEuclidean(b, goalNode)
@@ -295,13 +311,24 @@ const greedyBestFirstSearch = async (
 
     // Have we reached the goal
     if (isSameLocation(thisNode, goalNode)) {
+      const endTime = performance.now(); // Capture end time when the goal is found
+      const duration = (endTime - startTime); // Calculate duration in milliseconds
+      const minutes = Math.floor((duration / 1000) / 60).toString().padStart(2, '0'); // Convert to minutes and format
+      const seconds = Math.floor((duration / 1000) % 60).toString().padStart(2, '0'); // Get remaining seconds and format
+      const milliseconds = Math.floor(duration % 1000).toString().padStart(3, '0'); // Correctly get full milliseconds in three digits
+    
+      // For consistency and if you only need two digits for milliseconds, consider using only the first two digits
+      // However, displaying full milliseconds (three digits) is more common for precise timing
+      const displayMilliseconds = milliseconds.substring(0, 2); // Taking first two digits for MM:SS.mm format if desired
+    
       const foundPath = getPath(thisNode);
       const pathLengthInput = document.getElementById("path-length");
-      if (pathLengthInput instanceof HTMLInputElement) {
-        // Type guard to ensure it's an input element
-        pathLengthInput.value = foundPath.length.toString(); // Correctly update the value
+      const pathTimeInput = document.getElementById("path-time"); // Get the path-time input element
+      
+      if (pathLengthInput instanceof HTMLInputElement && pathTimeInput instanceof HTMLInputElement) {
+        pathLengthInput.value = foundPath.length.toString(); // Update the path length value
+        pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`; // Update the path time value in MM:SS.mm format
       }
-
       // Repaint the path cells
       paintCells(
         foundPath.filter(
@@ -384,12 +411,42 @@ function resetPath() {
 
 //Function to Clear everything in the Canvas
 function clearAll() {
-  //Insert code here idk pa.
+  // Clear the canvas visually
+  const canvas = <HTMLCanvasElement>document.getElementById("canvas");
+  const context = canvas.getContext("2d");
+  context?.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Optionally, reset the maze to an empty or initial state
+  // This would depend on how you want to manage the maze's lifecycle
+  // For instance, you might regenerate a new maze or simply clear the current one
+  // maze.splice(0, maze.length); // If you want to clear the maze array
+  generateAndRenderMaze(0); // If you want to regenerate a new maze with 0% walls
+
+  // Reset start and goal nodes to default positions or clear them
+  startNode = { x: 1, y: 1, wall: false }; // Reset to default or choose a method to clear
+  goalNode = { x: 119, y: 59, wall: false }; // Reset to default or choose a method to clear
+  // Repaint the start and goal nodes in their default or new positions
+  paintCells([startNode], "green");
+  paintCells([goalNode], "red");
+
+  // Clear any output or results displayed to the user
+  const output = document.getElementById("output");
+  if (output) {
+    output.innerText = ''; // Clear any text
+  }
+
+  // Clear path length display if applicable
+  const pathLengthInput = document.getElementById("path-length");
+  if (pathLengthInput instanceof HTMLInputElement) {
+    pathLengthInput.value = ''; // Clear the displayed path length
+  }
 }
+
 
 //For HTML Interactions
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("find-path").addEventListener("click", function () {
+    startTime = performance.now();
     const algorithmSelector = document.querySelector(
       ".drpdwnAlgo"
     ) as HTMLSelectElement;
@@ -419,8 +476,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("clear-button").addEventListener("click", () => {
-    resetPath();
+    clearAll();
   });
+
 });
 
 //The Random Coder template code for pathfinding

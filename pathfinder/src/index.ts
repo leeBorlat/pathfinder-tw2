@@ -211,7 +211,8 @@ const isWorseDuplicate = (source: Node, target: Node) => {
 const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
   const fringe = [startNode];
   const explored: Cell[] = [];
-  
+  //for counting visted explored nodes and successor nodes
+  let visitedNodesCounter = 0;
   let thisNode;
 
   do {
@@ -220,6 +221,7 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
     
     // Have we reached the goal
     if (isSameLocation(thisNode, goalNode)) {
+      updateVisitedNodesInput(visitedNodesCounter);
       const endTime = performance.now(); // Capture end time when the goal is found
       const duration = (endTime - startTime); // Calculate duration in milliseconds
       const minutes = Math.floor((duration / 1000) / 60).toString().padStart(2, '0'); // Convert to minutes and format
@@ -252,6 +254,7 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
     }
     // Mark as explored
     explored.push({ ...thisNode });
+    visitedNodesCounter++;
 
     const successorNodes = successors(thisNode, goalNode);
 
@@ -270,6 +273,7 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
         }
       }
       fringe.push(suc);
+      visitedNodesCounter++;
     });
 
     paintCells(
@@ -289,6 +293,7 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   } while (fringe.length > 0 && fringe.length < 1000000);
 
+  updateVisitedNodesInput(visitedNodesCounter);
   return `Path not found`;
 };
 
@@ -299,8 +304,9 @@ const greedyBestFirstSearch = async (
 ): Promise<string> => {
   const fringe = [startNode];
   const explored: Cell[] = [];
+  //for counting visted explored nodes and successor nodes
+  let visitedNodesCounter = 0;
   let thisNode;
-
   while (fringe.length > 0) {
     
     fringe.sort(
@@ -310,7 +316,8 @@ const greedyBestFirstSearch = async (
     thisNode = fringe.shift();
 
     // Have we reached the goal
-    if (isSameLocation(thisNode, goalNode)) {
+      if (isSameLocation(thisNode, goalNode)) {
+      updateVisitedNodesInput(visitedNodesCounter);
       const endTime = performance.now(); // Capture end time when the goal is found
       const duration = (endTime - startTime); // Calculate duration in milliseconds
       const minutes = Math.floor((duration / 1000) / 60).toString().padStart(2, '0'); // Convert to minutes and format
@@ -342,6 +349,7 @@ const greedyBestFirstSearch = async (
     }
     // Mark as explored
     explored.push({ ...thisNode });
+    visitedNodesCounter++;
 
     const successorNodes = successors(thisNode, goalNode);
 
@@ -354,6 +362,7 @@ const greedyBestFirstSearch = async (
         return;
 
       fringe.push(suc);
+      visitedNodesCounter++;
     });
 
     paintCells(
@@ -372,10 +381,17 @@ const greedyBestFirstSearch = async (
     );
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
-
+  updateVisitedNodesInput(visitedNodesCounter);
   return `Path not found`;
 };
 
+//Function to count visited nodes
+function updateVisitedNodesInput(count: number) {
+  const visitedNodesInput = document.getElementById('visited-nodes');
+  if (visitedNodesInput instanceof HTMLInputElement) {
+    visitedNodesInput.value = count.toString();
+  }
+}
 //Function to Reset path
 function resetPath() {
   const canvas = <HTMLCanvasElement>document.getElementById("canvas");
@@ -384,6 +400,22 @@ function resetPath() {
   // Clear the canvas
   context?.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Clear 'path-length' input
+    const pathLengthInput = document.getElementById("path-length");
+    if (pathLengthInput instanceof HTMLInputElement) {
+      pathLengthInput.value = ''; // Set to empty or default value
+    }
+  
+    // Clear 'visited-nodes' input
+    const visitedNodesInput = document.getElementById("visited-nodes");
+    if (visitedNodesInput instanceof HTMLInputElement) {
+      visitedNodesInput.value = ''; // Set to empty or default value
+    }
+    // Clear 'path-time' input
+    const pathTimeInput = document.getElementById("path-time");
+    if (pathTimeInput instanceof HTMLInputElement) {
+      pathTimeInput.value = ''; // Set to empty or default value
+    }
   // Repaint the maze walls and paths
   const walls = maze.flat().filter(({ wall }) => wall);
   const paths = maze.flat().filter(({ wall }) => !wall);
@@ -415,6 +447,7 @@ function clearAll() {
   const canvas = <HTMLCanvasElement>document.getElementById("canvas");
   const context = canvas.getContext("2d");
   context?.clearRect(0, 0, canvas.width, canvas.height);
+  
 
   // Optionally, reset the maze to an empty or initial state
   // This would depend on how you want to manage the maze's lifecycle
@@ -439,6 +472,16 @@ function clearAll() {
   const pathLengthInput = document.getElementById("path-length");
   if (pathLengthInput instanceof HTMLInputElement) {
     pathLengthInput.value = ''; // Clear the displayed path length
+  }
+  // Clear 'visited-nodes' input
+  const visitedNodesInput = document.getElementById("visited-nodes");
+    if (visitedNodesInput instanceof HTMLInputElement) {
+      visitedNodesInput.value = ''; // Set to empty or default value
+    }
+  // Clear 'path-time' input
+  const pathTimeInput = document.getElementById("path-time");
+  if (pathTimeInput instanceof HTMLInputElement) {
+    pathTimeInput.value = ''; // Set to empty or default value
   }
 }
 

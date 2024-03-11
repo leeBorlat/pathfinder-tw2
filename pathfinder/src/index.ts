@@ -18,15 +18,21 @@ function generateAndRenderMaze(wallPercentage: number) {
     wallPercentage
   );
   const mazeData = mazeString.split("\n");
+
+  // Convert maze data to grid while keeping start/goal nodes clear
   const mazeGrid = mazeData.map((row, rowIndex) =>
-    row.split("").map((cell, cellIndex) => ({
-      x: cellIndex,
-      y: rowIndex,
-      wall: cell === "#",
-    }))
+    row.split("").map((cell, cellIndex) => {
+      const isStart = cellIndex === startNode.x && rowIndex === startNode.y;
+      const isGoal = cellIndex === goalNode.x && rowIndex === goalNode.y;
+      return {
+        x: cellIndex,
+        y: rowIndex,
+        wall: cell === "#" && !isStart && !isGoal, // Ensure start/goal aren't walls
+      };
+    })
   );
 
-  const canvas = <HTMLCanvasElement>document.getElementById("canvas");
+  const canvas = document.getElementById("canvas") as HTMLCanvasElement;
   const context = canvas.getContext("2d");
   context?.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -35,12 +41,12 @@ function generateAndRenderMaze(wallPercentage: number) {
 
   paintCells(walls, "#000");
   paintCells(paths, "#fff");
-  paintCells([startNode], "green");
-  paintCells([goalNode], "red");
-
+  paintCells([startNode],"green");
+  paintCells([goalNode],"red");
   // Update the maze array
   maze.splice(0, maze.length, ...mazeGrid);
 }
+
 
 // Function to update the start and goal node positions
 function updateStartAndGoalNodes(
@@ -100,13 +106,42 @@ document.addEventListener("DOMContentLoaded", () => {
   generateAndRenderMaze(0);
 });
 
+// document.getElementById("generateMazeBtn")?.addEventListener("click", () => {
+//   const randomizerInput = <HTMLInputElement>(
+//     document.getElementById("randomizer-percentage")
+//   );
+//   const wallPercentage = randomizerInput.value
+//     ? parseInt(randomizerInput.value)
+//     : 30;
+//   generateAndRenderMaze(wallPercentage);
+// });
+
+// document
+//   .querySelectorAll(".startx, .starty, .goalx, .goaly")
+//   .forEach((element) => {
+//     element.addEventListener("keypress", (event) => {
+//       if ((event as KeyboardEvent).key === "Enter") {
+//         const startX = parseInt(
+//           (<HTMLInputElement>document.querySelector(".startx")).value
+//         );
+//         const startY = parseInt(
+//           (<HTMLInputElement>document.querySelector(".starty")).value
+//         );
+//         const goalX = parseInt(
+//           (<HTMLInputElement>document.querySelector(".goalx")).value
+//         );
+//         const goalY = parseInt(
+//           (<HTMLInputElement>document.querySelector(".goaly")).value
+//         );
+
+//         // Update the positions of startNode and goalNode
+//         updateStartAndGoalNodes(startX, startY, goalX, goalY);
+//       }
+//     });
+//   });
 document.getElementById("generateMazeBtn")?.addEventListener("click", () => {
-  const randomizerInput = <HTMLInputElement>(
-    document.getElementById("randomizer-percentage")
-  );
-  const wallPercentage = randomizerInput.value
-    ? parseInt(randomizerInput.value)
-    : 30;
+  const randomizerInput = document.getElementById("randomizer-percentage") as HTMLInputElement;
+  const wallPercentage = randomizerInput.value ? parseInt(randomizerInput.value) : 30;
   generateAndRenderMaze(wallPercentage);
 });
 
@@ -115,24 +150,22 @@ document
   .forEach((element) => {
     element.addEventListener("keypress", (event) => {
       if ((event as KeyboardEvent).key === "Enter") {
-        const startX = parseInt(
-          (<HTMLInputElement>document.querySelector(".startx")).value
-        );
-        const startY = parseInt(
-          (<HTMLInputElement>document.querySelector(".starty")).value
-        );
-        const goalX = parseInt(
-          (<HTMLInputElement>document.querySelector(".goalx")).value
-        );
-        const goalY = parseInt(
-          (<HTMLInputElement>document.querySelector(".goaly")).value
-        );
+        const startXInput = document.querySelector(".startx") as HTMLInputElement;
+        const startYInput = document.querySelector(".starty") as HTMLInputElement;
+        const goalXInput = document.querySelector(".goalx") as HTMLInputElement;
+        const goalYInput = document.querySelector(".goaly") as HTMLInputElement;
 
-        // Update the positions of startNode and goalNode
+        // Ensure string input to parseInt using 'toString()'
+        const startX = parseInt(startXInput.value?.toString() ?? "0");
+        const startY = parseInt(startYInput.value?.toString() ?? "0");
+        const goalX = parseInt(goalXInput.value?.toString() ?? "0");
+        const goalY = parseInt(goalYInput.value?.toString() ?? "0");
+
         updateStartAndGoalNodes(startX, startY, goalX, goalY);
       }
     });
   });
+
 
 const getNode = (x: number, y: number) => {
   if (x < 0 || x >= maze[0].length || y < 0 || y >= maze.length) {
@@ -214,10 +247,13 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
   //for counting visted explored nodes and successor nodes
   let visitedNodesCounter = 0;
   let thisNode;
-
+try{
   do {
 
     thisNode = fringe.shift();
+    if (isGoalBlocked(thisNode, goalNode)) {
+      throw new Error("Goal node is blocked by walls");
+    }
     
     // Have we reached the goal
     if (isSameLocation(thisNode, goalNode)) {
@@ -291,11 +327,25 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
       "pink"
     );
     await new Promise((resolve) => setTimeout(resolve, 0));
-  } while (fringe.length > 0 && fringe.length < 1000000);
-
+  }while (fringe.length > 0 && fringe.length < 10000);
   updateVisitedNodesInput(visitedNodesCounter);
   return `Path not found`;
+} catch (error) {
+  if (error.message === "Goal node is blocked by walls") {
+    console.error(error.message); // Log the error for debugging
+    return "Path to goal node is blocked by walls"; // Return a specific message
+  } else {
+    throw error; // Re-throw other errors
+    }
+  }
 };
+
+function isGoalBlocked(thisNode: Cell, goalNode: Cell): boolean {
+  // Implement logic to check if the goal node is reachable from thisNode
+  // If there are any walls directly blocking access to the goal node, return true
+  // (Replace this with your actual wall-checking logic)
+  return false; // Replace with appropriate boolean value based on your wall representation
+}
 
 //Trad GBFS Algo
 const greedyBestFirstSearch = async (
@@ -448,6 +498,22 @@ function clearAll() {
   const context = canvas.getContext("2d");
   context?.clearRect(0, 0, canvas.width, canvas.height);
   
+  startNode = { x: 1, y: 1, wall: false }; // Reset to default or choose a method to clear
+  goalNode = { x: 119, y: 59, wall: false }; // Reset to default or choose a method to clear
+  // Repaint the start and goal nodes in their default or new positions
+  paintCells([startNode], "green");
+  paintCells([goalNode], "red");
+
+  //to reset the node coordinate values in the site
+  const startNodeInputX = document.querySelector(".startx") as HTMLInputElement;
+  const startNodeInputY = document.querySelector(".starty") as HTMLInputElement;
+  const goalNodeInputX = document.querySelector(".goalx") as HTMLInputElement;
+  const goalNodeInputY = document.querySelector(".goaly") as HTMLInputElement;
+
+  startNodeInputX.value = "1";
+  startNodeInputY.value = "1";
+  goalNodeInputX.value = "119";
+  goalNodeInputY.value = "59";
 
   // Optionally, reset the maze to an empty or initial state
   // This would depend on how you want to manage the maze's lifecycle
@@ -456,11 +522,7 @@ function clearAll() {
   generateAndRenderMaze(0); // If you want to regenerate a new maze with 0% walls
 
   // Reset start and goal nodes to default positions or clear them
-  startNode = { x: 1, y: 1, wall: false }; // Reset to default or choose a method to clear
-  goalNode = { x: 119, y: 59, wall: false }; // Reset to default or choose a method to clear
-  // Repaint the start and goal nodes in their default or new positions
-  paintCells([startNode], "green");
-  paintCells([goalNode], "red");
+
 
   // Clear any output or results displayed to the user
   const output = document.getElementById("output");
@@ -496,6 +558,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedAlgorithm = algorithmSelector.value;
 
     if (selectedAlgorithm === "optimalPath") {
+      //clear yung path na nagawa
+      const paths = maze.flat().filter(({ wall }) => !wall);
+      paintCells(paths, "#fff");
+      paintCells([startNode], "green");
+      paintCells([goalNode], "red");
+
       pathFind(startNode, goalNode).then((result) => {
         const output = document.getElementById("output");
         if (output) {
@@ -503,6 +571,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     } else if (selectedAlgorithm === "tradGBFS") {
+      const paths = maze.flat().filter(({ wall }) => !wall);
+      paintCells(paths, "#fff");
+      paintCells([startNode], "green");
+      paintCells([goalNode], "red");
+      
       greedyBestFirstSearch(startNode, goalNode).then((result) => {
         const output = document.getElementById("output");
         if (output) {

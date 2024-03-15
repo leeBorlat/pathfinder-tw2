@@ -41,12 +41,11 @@ function generateAndRenderMaze(wallPercentage: number) {
 
   paintCells(walls, "#000");
   paintCells(paths, "#fff");
-  paintCells([startNode],"green");
-  paintCells([goalNode],"red");
+  paintCells([startNode], "green");
+  paintCells([goalNode], "red");
   // Update the maze array
   maze.splice(0, maze.length, ...mazeGrid);
 }
-
 
 // Function to update the start and goal node positions
 function updateStartAndGoalNodes(
@@ -106,42 +105,14 @@ document.addEventListener("DOMContentLoaded", () => {
   generateAndRenderMaze(0);
 });
 
-// document.getElementById("generateMazeBtn")?.addEventListener("click", () => {
-//   const randomizerInput = <HTMLInputElement>(
-//     document.getElementById("randomizer-percentage")
-//   );
-//   const wallPercentage = randomizerInput.value
-//     ? parseInt(randomizerInput.value)
-//     : 30;
-//   generateAndRenderMaze(wallPercentage);
-// });
-
-// document
-//   .querySelectorAll(".startx, .starty, .goalx, .goaly")
-//   .forEach((element) => {
-//     element.addEventListener("keypress", (event) => {
-//       if ((event as KeyboardEvent).key === "Enter") {
-//         const startX = parseInt(
-//           (<HTMLInputElement>document.querySelector(".startx")).value
-//         );
-//         const startY = parseInt(
-//           (<HTMLInputElement>document.querySelector(".starty")).value
-//         );
-//         const goalX = parseInt(
-//           (<HTMLInputElement>document.querySelector(".goalx")).value
-//         );
-//         const goalY = parseInt(
-//           (<HTMLInputElement>document.querySelector(".goaly")).value
-//         );
-
-//         // Update the positions of startNode and goalNode
-//         updateStartAndGoalNodes(startX, startY, goalX, goalY);
-//       }
-//     });
-//   });
+//Function to generate maze
 document.getElementById("generateMazeBtn")?.addEventListener("click", () => {
-  const randomizerInput = document.getElementById("randomizer-percentage") as HTMLInputElement;
-  const wallPercentage = randomizerInput.value ? parseInt(randomizerInput.value) : 30;
+  const randomizerInput = document.getElementById(
+    "randomizer-percentage"
+  ) as HTMLInputElement;
+  const wallPercentage = randomizerInput.value
+    ? parseInt(randomizerInput.value)
+    : 30;
   generateAndRenderMaze(wallPercentage);
 });
 
@@ -150,8 +121,12 @@ document
   .forEach((element) => {
     element.addEventListener("keypress", (event) => {
       if ((event as KeyboardEvent).key === "Enter") {
-        const startXInput = document.querySelector(".startx") as HTMLInputElement;
-        const startYInput = document.querySelector(".starty") as HTMLInputElement;
+        const startXInput = document.querySelector(
+          ".startx"
+        ) as HTMLInputElement;
+        const startYInput = document.querySelector(
+          ".starty"
+        ) as HTMLInputElement;
         const goalXInput = document.querySelector(".goalx") as HTMLInputElement;
         const goalYInput = document.querySelector(".goaly") as HTMLInputElement;
 
@@ -165,7 +140,6 @@ document
       }
     });
   });
-
 
 const getNode = (x: number, y: number) => {
   if (x < 0 || x >= maze[0].length || y < 0 || y >= maze.length) {
@@ -181,16 +155,33 @@ interface Node extends Cell {
   heuristic?: number;
 }
 
+//Manhattan Distance
 const heuristicManhattan = (source: Node, target: Node) => {
   return Math.abs(source.x - target.x) + Math.abs(source.y - target.y);
 };
 
+//Euclidean Distance
 const heuristicEuclidean = (source: Node, target: Node) => {
   return Math.sqrt(
     Math.pow(target.x - source.x, 2) + Math.pow(target.y - source.y, 2)
   );
 };
 
+// Chebyshev Distance
+const heuristicChebyshev = (source: Node, target: Node) => {
+  return Math.max(Math.abs(source.x - target.x), Math.abs(source.y - target.y));
+};
+
+// Octile Distance
+const heuristicOctile = (source: Node, target: Node) => {
+  const dx = Math.abs(source.x - target.x);
+  const dy = Math.abs(source.y - target.y);
+  const minDelta = Math.min(dx, dy);
+  const maxDelta = Math.max(dx, dy);
+  return minDelta * Math.SQRT2 + (maxDelta - minDelta);
+};
+
+//Directions for Nodes
 const successors = (currentNode: Node, goalNode: Node): Node[] => {
   const adjacent = [
     { x: 0, y: -1 }, //Up
@@ -212,7 +203,7 @@ const successors = (currentNode: Node, goalNode: Node): Node[] => {
     ...successor,
     previous: currentNode,
     totalCost: (currentNode.totalCost || 0) + 1,
-    heuristic: heuristicManhattan(successor, goalNode),
+    heuristic: heuristicEuclidean(successor, goalNode),
   }));
 };
 
@@ -229,6 +220,7 @@ const isNodeBetter = (source: Node, target: Node) => {
   );
 };
 
+//Function to get the path from start to goal node
 const getPath = (node: Node): Node[] => {
   return node.previous
     ? [{ ...node }, ...getPath(node.previous)]
@@ -240,153 +232,60 @@ const isWorseDuplicate = (source: Node, target: Node) => {
   return isSameLocation(source, target) && !isNodeBetter(source, target);
 };
 
-//Stock Algo
-const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
-  const fringe = [startNode];
-  const explored: Cell[] = [];
-  //for counting visted explored nodes and successor nodes
-  let visitedNodesCounter = 0;
-  let thisNode;
-try{
-  do {
-
-    thisNode = fringe.shift();
-    if (isGoalBlocked(thisNode, goalNode)) {
-      throw new Error("Goal node is blocked by walls");
-    }
-    
-    // Have we reached the goal
-    if (isSameLocation(thisNode, goalNode)) {
-      updateVisitedNodesInput(visitedNodesCounter);
-      const endTime = performance.now(); // Capture end time when the goal is found
-      const duration = (endTime - startTime); // Calculate duration in milliseconds
-      const minutes = Math.floor((duration / 1000) / 60).toString().padStart(2, '0'); // Convert to minutes and format
-      const seconds = Math.floor((duration / 1000) % 60).toString().padStart(2, '0'); // Get remaining seconds and format
-      const milliseconds = Math.floor(duration % 1000).toString().padStart(3, '0'); // Correctly get full milliseconds in three digits
-    
-      // For consistency and if you only need two digits for milliseconds, consider using only the first two digits
-      // However, displaying full milliseconds (three digits) is more common for precise timing
-      const displayMilliseconds = milliseconds.substring(0, 2); // Taking first two digits for MM:SS.mm format if desired
-    
-      const foundPath = getPath(thisNode);
-      const pathLengthInput = document.getElementById("path-length");
-      const pathTimeInput = document.getElementById("path-time"); // Get the path-time input element
-      
-      if (pathLengthInput instanceof HTMLInputElement && pathTimeInput instanceof HTMLInputElement) {
-        pathLengthInput.value = foundPath.length.toString(); // Update the path length value
-        pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`; // Update the path time value in MM:SS.mm format
-      }
-    
-    // Repaint the path cells
-      paintCells(
-        foundPath.filter(
-          (node) =>
-            !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
-        ),
-        "yellow"
-      );
-
-      return `Found path with length ${foundPath.length}`;
-    }
-    // Mark as explored
-    explored.push({ ...thisNode });
-    visitedNodesCounter++;
-
-    const successorNodes = successors(thisNode, goalNode);
-
-    successorNodes.forEach((suc) => {
-      if (
-        [...explored, ...fringe].some((exploredNode) =>
-          isWorseDuplicate(suc, exploredNode)
-        )
-      )
-        return;
-
-      for (let i = 0; i < fringe.length; i++) {
-        if (isNodeBetter(suc, fringe[i])) {
-          fringe.splice(i, 0, suc);
-          return;
-        }
-      }
-      fringe.push(suc);
-      visitedNodesCounter++;
-    });
-
-    paintCells(
-      explored.filter(
-        (node) =>
-          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
-      ),
-      "#00f"
-    );
-    paintCells(
-      fringe.filter(
-        (node) =>
-          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
-      ),
-      "pink"
-    );
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }while (fringe.length > 0 && fringe.length < 10000);
-  updateVisitedNodesInput(visitedNodesCounter);
-  return `Path not found`;
-} catch (error) {
-  if (error.message === "Goal node is blocked by walls") {
-    console.error(error.message); // Log the error for debugging
-    return "Path to goal node is blocked by walls"; // Return a specific message
-  } else {
-    throw error; // Re-throw other errors
-    }
-  }
-};
-
-function isGoalBlocked(thisNode: Cell, goalNode: Cell): boolean {
-  // Implement logic to check if the goal node is reachable from thisNode
-  // If there are any walls directly blocking access to the goal node, return true
-  // (Replace this with your actual wall-checking logic)
-  return false; // Replace with appropriate boolean value based on your wall representation
-}
-
 //Trad GBFS Algo
-const greedyBestFirstSearch = async (
-  startNode: Cell,
-  goalNode: Cell
-): Promise<string> => {
-  const fringe = [startNode];
-  const explored: Cell[] = [];
-  //for counting visted explored nodes and successor nodes
+const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
+  let startTime: number | undefined; // Declare startTime as number or undefined
+  startTime = performance.now(); // Initialize startTime when the algorithm starts
+
+  const openList: Node[] = [startNode];
+  const closedList: Node[] = [];
   let visitedNodesCounter = 0;
-  let thisNode;
-  while (fringe.length > 0) {
-    
-    fringe.sort(
+
+  while (openList.length > 0) {
+    // Step 3: Remove the node with the lowest heuristic value from the open list
+    openList.sort(
       (a, b) =>
         heuristicEuclidean(a, goalNode) - heuristicEuclidean(b, goalNode)
     );
-    thisNode = fringe.shift();
+    const currentNode = openList.shift();
 
-    // Have we reached the goal
-      if (isSameLocation(thisNode, goalNode)) {
+    if (!currentNode) break;
+
+    // Step 4: Move the current node to the closed list
+    closedList.push(currentNode);
+
+    // Step 5: Check if the current node is the goal node
+    if (isSameLocation(currentNode, goalNode)) {
+      // Path found, update UI and return path
       updateVisitedNodesInput(visitedNodesCounter);
       const endTime = performance.now(); // Capture end time when the goal is found
-      const duration = (endTime - startTime); // Calculate duration in milliseconds
-      const minutes = Math.floor((duration / 1000) / 60).toString().padStart(2, '0'); // Convert to minutes and format
-      const seconds = Math.floor((duration / 1000) % 60).toString().padStart(2, '0'); // Get remaining seconds and format
-      const milliseconds = Math.floor(duration % 1000).toString().padStart(3, '0'); // Correctly get full milliseconds in three digits
-    
+      const duration = endTime - startTime; // Calculate duration in milliseconds
+      const minutes = Math.floor(duration / 1000 / 60)
+        .toString()
+        .padStart(2, "0"); // Convert to minutes and format
+      const seconds = Math.floor((duration / 1000) % 60)
+        .toString()
+        .padStart(2, "0"); // Get remaining seconds and format
+      const milliseconds = Math.floor(duration % 1000)
+        .toString()
+        .padStart(3, "0"); // Correctly get full milliseconds in three digits
+
       // For consistency and if you only need two digits for milliseconds, consider using only the first two digits
       // However, displaying full milliseconds (three digits) is more common for precise timing
       const displayMilliseconds = milliseconds.substring(0, 2); // Taking first two digits for MM:SS.mm format if desired
-    
-      const foundPath = getPath(thisNode);
+
+      const foundPath = getPath(currentNode);
       const pathLengthInput = document.getElementById("path-length");
       const pathTimeInput = document.getElementById("path-time"); // Get the path-time input element
-      
-      if (pathLengthInput instanceof HTMLInputElement && pathTimeInput instanceof HTMLInputElement) {
+
+      if (
+        pathLengthInput instanceof HTMLInputElement &&
+        pathTimeInput instanceof HTMLInputElement
+      ) {
         pathLengthInput.value = foundPath.length.toString(); // Update the path length value
         pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`; // Update the path time value in MM:SS.mm format
       }
-      // Repaint the path cells
+
       paintCells(
         foundPath.filter(
           (node) =>
@@ -394,54 +293,262 @@ const greedyBestFirstSearch = async (
         ),
         "yellow"
       );
-
       return `Found path with length ${foundPath.length}`;
     }
-    // Mark as explored
-    explored.push({ ...thisNode });
-    visitedNodesCounter++;
 
-    const successorNodes = successors(thisNode, goalNode);
+    // Step 6: Generate and add successors to the open list
+    const successorNodes = successors(currentNode, goalNode);
 
-    successorNodes.forEach((suc) => {
+    for (const successor of successorNodes) {
       if (
-        [...explored, ...fringe].some((exploredNode) =>
-          isWorseDuplicate(suc, exploredNode)
+        ![...openList, ...closedList].some((node) =>
+          isWorseDuplicate(successor, node)
         )
-      )
-        return;
+      ) {
+        openList.push(successor);
+        visitedNodesCounter++;
+      }
+    }
 
-      fringe.push(suc);
-      visitedNodesCounter++;
-    });
-
+    // Visualize exploration
     paintCells(
-      explored.filter(
+      closedList.filter(
         (node) =>
           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
       ),
       "#00f"
     );
     paintCells(
-      fringe.filter(
+      openList.filter(
         (node) =>
           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
       ),
       "pink"
     );
+
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
+
+  // No path found
   updateVisitedNodesInput(visitedNodesCounter);
-  return `Path not found`;
+  return "Path not found";
+};
+
+//Prop GBFS Algo
+const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
+  let startTime: number | undefined; // Declare startTime as number or undefined
+  startTime = performance.now(); // Initialize startTime when the algorithm starts
+
+  const openList: Node[] = [startNode];
+  const closedList: Node[] = [];
+  let visitedNodesCounter = 0;
+
+  while (openList.length > 0) {
+    // Step 3: Remove the node with the lowest heuristic value from the open list
+    openList.sort(
+      (a, b) => heuristicOctile(a, goalNode) - heuristicOctile(b, goalNode)
+    );
+    const currentNode = openList.shift();
+
+    if (!currentNode) break;
+
+    // Step 4: Move the current node to the closed list
+    closedList.push(currentNode);
+
+    // Step 5: Check if the current node is the goal node
+    if (isSameLocation(currentNode, goalNode)) {
+      // Path found, update UI and return path
+      updateVisitedNodesInput(visitedNodesCounter);
+      const endTime = performance.now(); // Capture end time when the goal is found
+      const duration = endTime - startTime; // Calculate duration in milliseconds
+      const minutes = Math.floor(duration / 1000 / 60)
+        .toString()
+        .padStart(2, "0"); // Convert to minutes and format
+      const seconds = Math.floor((duration / 1000) % 60)
+        .toString()
+        .padStart(2, "0"); // Get remaining seconds and format
+      const milliseconds = Math.floor(duration % 1000)
+        .toString()
+        .padStart(3, "0"); // Correctly get full milliseconds in three digits
+
+      // For consistency and if you only need two digits for milliseconds, consider using only the first two digits
+      // However, displaying full milliseconds (three digits) is more common for precise timing
+      const displayMilliseconds = milliseconds.substring(0, 2); // Taking first two digits for MM:SS.mm format if desired
+
+      const foundPath = getPath(currentNode);
+      const pathLengthInput = document.getElementById("path-length");
+      const pathTimeInput = document.getElementById("path-time"); // Get the path-time input element
+
+      if (
+        pathLengthInput instanceof HTMLInputElement &&
+        pathTimeInput instanceof HTMLInputElement
+      ) {
+        pathLengthInput.value = foundPath.length.toString(); // Update the path length value
+        pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`; // Update the path time value in MM:SS.mm format
+      }
+
+      paintCells(
+        foundPath.filter(
+          (node) =>
+            !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+        ),
+        "yellow"
+      );
+      return `Found path with length ${foundPath.length}`;
+    }
+
+    // Step 6: Generate and add successors to the open list
+    const successorNodes = successors(currentNode, goalNode);
+
+    for (const successor of successorNodes) {
+      if (
+        ![...openList, ...closedList].some((node) =>
+          isWorseDuplicate(successor, node)
+        )
+      ) {
+        openList.push(successor);
+        visitedNodesCounter++;
+      }
+    }
+
+    // Visualize exploration
+    paintCells(
+      closedList.filter(
+        (node) =>
+          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+      ),
+      "#00f"
+    );
+    paintCells(
+      openList.filter(
+        (node) =>
+          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+      ),
+      "pink"
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  // No path found
+  updateVisitedNodesInput(visitedNodesCounter);
+  return "Path not found";
+};
+
+//Stock Algo
+const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
+  const openList = [startNode];
+  const closedList: Cell[] = [];
+  //for counting visted explored nodes and successor nodes
+  let visitedNodesCounter = 0;
+  let thisNode;
+  try {
+    do {
+      thisNode = openList.shift();
+
+      // Have we reached the goal
+      if (isSameLocation(thisNode, goalNode)) {
+        updateVisitedNodesInput(visitedNodesCounter);
+        const endTime = performance.now(); // Capture end time when the goal is found
+        const duration = endTime - startTime; // Calculate duration in milliseconds
+        const minutes = Math.floor(duration / 1000 / 60)
+          .toString()
+          .padStart(2, "0"); // Convert to minutes and format
+        const seconds = Math.floor((duration / 1000) % 60)
+          .toString()
+          .padStart(2, "0"); // Get remaining seconds and format
+        const milliseconds = Math.floor(duration % 1000)
+          .toString()
+          .padStart(3, "0"); // Correctly get full milliseconds in three digits
+
+        // For consistency and if you only need two digits for milliseconds, consider using only the first two digits
+        // However, displaying full milliseconds (three digits) is more common for precise timing
+        const displayMilliseconds = milliseconds.substring(0, 2); // Taking first two digits for MM:SS.mm format if desired
+
+        const foundPath = getPath(thisNode);
+        const pathLengthInput = document.getElementById("path-length");
+        const pathTimeInput = document.getElementById("path-time"); // Get the path-time input element
+
+        if (
+          pathLengthInput instanceof HTMLInputElement &&
+          pathTimeInput instanceof HTMLInputElement
+        ) {
+          pathLengthInput.value = foundPath.length.toString(); // Update the path length value
+          pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`; // Update the path time value in MM:SS.mm format
+        }
+
+        // Repaint the path cells
+        paintCells(
+          foundPath.filter(
+            (node) =>
+              !isSameLocation(node, startNode) &&
+              !isSameLocation(node, goalNode)
+          ),
+          "yellow"
+        );
+
+        return `Found path with length ${foundPath.length}`;
+      }
+      // Mark as explored
+      closedList.push({ ...thisNode });
+      visitedNodesCounter++;
+
+      const successorNodes = successors(thisNode, goalNode);
+
+      successorNodes.forEach((suc) => {
+        if (
+          [...closedList, ...openList].some((exploredNode) =>
+            isWorseDuplicate(suc, exploredNode)
+          )
+        )
+          return;
+
+        for (let i = 0; i < openList.length; i++) {
+          if (isNodeBetter(suc, openList[i])) {
+            openList.splice(i, 0, suc);
+            return;
+          }
+        }
+        openList.push(suc);
+        visitedNodesCounter++;
+      });
+
+      paintCells(
+        closedList.filter(
+          (node) =>
+            !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+        ),
+        "#00f"
+      );
+      paintCells(
+        openList.filter(
+          (node) =>
+            !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+        ),
+        "pink"
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    } while (openList.length > 0 && openList.length < 10000);
+    updateVisitedNodesInput(visitedNodesCounter);
+    return `Path not found`;
+  } catch (error) {
+    if (error.message === "Goal node is blocked by walls") {
+      console.error(error.message); // Log the error for debugging
+      return "Path to goal node is blocked by walls"; // Return a specific message
+    } else {
+      throw error; // Re-throw other errors
+    }
+  }
 };
 
 //Function to count visited nodes
 function updateVisitedNodesInput(count: number) {
-  const visitedNodesInput = document.getElementById('visited-nodes');
+  const visitedNodesInput = document.getElementById("visited-nodes");
   if (visitedNodesInput instanceof HTMLInputElement) {
     visitedNodesInput.value = count.toString();
   }
 }
+
 //Function to Reset path
 function resetPath() {
   const canvas = <HTMLCanvasElement>document.getElementById("canvas");
@@ -450,22 +557,22 @@ function resetPath() {
   // Clear the canvas
   context?.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Clear 'path-length' input
-    const pathLengthInput = document.getElementById("path-length");
-    if (pathLengthInput instanceof HTMLInputElement) {
-      pathLengthInput.value = ''; // Set to empty or default value
-    }
-  
-    // Clear 'visited-nodes' input
-    const visitedNodesInput = document.getElementById("visited-nodes");
-    if (visitedNodesInput instanceof HTMLInputElement) {
-      visitedNodesInput.value = ''; // Set to empty or default value
-    }
-    // Clear 'path-time' input
-    const pathTimeInput = document.getElementById("path-time");
-    if (pathTimeInput instanceof HTMLInputElement) {
-      pathTimeInput.value = ''; // Set to empty or default value
-    }
+  // Clear 'path-length' input
+  const pathLengthInput = document.getElementById("path-length");
+  if (pathLengthInput instanceof HTMLInputElement) {
+    pathLengthInput.value = ""; // Set to empty or default value
+  }
+
+  // Clear 'visited-nodes' input
+  const visitedNodesInput = document.getElementById("visited-nodes");
+  if (visitedNodesInput instanceof HTMLInputElement) {
+    visitedNodesInput.value = ""; // Set to empty or default value
+  }
+  // Clear 'path-time' input
+  const pathTimeInput = document.getElementById("path-time");
+  if (pathTimeInput instanceof HTMLInputElement) {
+    pathTimeInput.value = ""; // Set to empty or default value
+  }
   // Repaint the maze walls and paths
   const walls = maze.flat().filter(({ wall }) => wall);
   const paths = maze.flat().filter(({ wall }) => !wall);
@@ -497,7 +604,7 @@ function clearAll() {
   const canvas = <HTMLCanvasElement>document.getElementById("canvas");
   const context = canvas.getContext("2d");
   context?.clearRect(0, 0, canvas.width, canvas.height);
-  
+
   startNode = { x: 1, y: 1, wall: false }; // Reset to default or choose a method to clear
   goalNode = { x: 119, y: 59, wall: false }; // Reset to default or choose a method to clear
   // Repaint the start and goal nodes in their default or new positions
@@ -523,30 +630,28 @@ function clearAll() {
 
   // Reset start and goal nodes to default positions or clear them
 
-
   // Clear any output or results displayed to the user
   const output = document.getElementById("output");
   if (output) {
-    output.innerText = ''; // Clear any text
+    output.innerText = ""; // Clear any text
   }
 
   // Clear path length display if applicable
   const pathLengthInput = document.getElementById("path-length");
   if (pathLengthInput instanceof HTMLInputElement) {
-    pathLengthInput.value = ''; // Clear the displayed path length
+    pathLengthInput.value = ""; // Clear the displayed path length
   }
   // Clear 'visited-nodes' input
   const visitedNodesInput = document.getElementById("visited-nodes");
-    if (visitedNodesInput instanceof HTMLInputElement) {
-      visitedNodesInput.value = ''; // Set to empty or default value
-    }
+  if (visitedNodesInput instanceof HTMLInputElement) {
+    visitedNodesInput.value = ""; // Set to empty or default value
+  }
   // Clear 'path-time' input
   const pathTimeInput = document.getElementById("path-time");
   if (pathTimeInput instanceof HTMLInputElement) {
-    pathTimeInput.value = ''; // Set to empty or default value
+    pathTimeInput.value = ""; // Set to empty or default value
   }
 }
-
 
 //For HTML Interactions
 document.addEventListener("DOMContentLoaded", () => {
@@ -557,7 +662,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ) as HTMLSelectElement;
     const selectedAlgorithm = algorithmSelector.value;
 
-    if (selectedAlgorithm === "optimalPath") {
+    if (selectedAlgorithm === "stockAlgo") {
       //clear yung path na nagawa
       const paths = maze.flat().filter(({ wall }) => !wall);
       paintCells(paths, "#fff");
@@ -570,13 +675,25 @@ document.addEventListener("DOMContentLoaded", () => {
           output.innerText = result;
         }
       });
+    } else if (selectedAlgorithm === "propGBFS") {
+      const paths = maze.flat().filter(({ wall }) => !wall);
+      paintCells(paths, "#fff");
+      paintCells([startNode], "green");
+      paintCells([goalNode], "red");
+
+      propGBFS(startNode, goalNode).then((result) => {
+        const output = document.getElementById("output");
+        if (output) {
+          output.innerText = result;
+        }
+      });
     } else if (selectedAlgorithm === "tradGBFS") {
       const paths = maze.flat().filter(({ wall }) => !wall);
       paintCells(paths, "#fff");
       paintCells([startNode], "green");
       paintCells([goalNode], "red");
-      
-      greedyBestFirstSearch(startNode, goalNode).then((result) => {
+
+      tradGBFS(startNode, goalNode).then((result) => {
         const output = document.getElementById("output");
         if (output) {
           output.innerText = result;
@@ -594,7 +711,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("clear-button").addEventListener("click", () => {
     clearAll();
   });
-
 });
 
 //The Random Coder template code for pathfinding

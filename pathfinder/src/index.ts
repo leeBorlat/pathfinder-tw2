@@ -153,6 +153,9 @@ interface Node extends Cell {
   previous?: Node;
   totalCost?: number;
   heuristic?: number;
+  x: number;
+  y: number;
+  wall: boolean; // Add the 'wall' property to the Node interface
 }
 
 //Manhattan Distance
@@ -181,7 +184,6 @@ const heuristicOctile = (source: Node, target: Node) => {
   return minDelta * Math.SQRT2 + (maxDelta - minDelta);
 };
 
-//Directions for Nodes
 const successors = (currentNode: Node, goalNode: Node): Node[] => {
   const adjacent = [
     { x: 0, y: -1 }, //Up
@@ -195,16 +197,66 @@ const successors = (currentNode: Node, goalNode: Node): Node[] => {
   ];
 
   const successorNodes = adjacent
-    .map((node) => getNode(currentNode.x + node.x, currentNode.y + node.y))
-    .filter((node) => node !== null)
-    .filter(({ wall }) => !wall);
+    .map(({ x: dx, y: dy }) => {
+      const nextX = currentNode.x + dx;
+      const nextY = currentNode.y + dy;
+      const node = getNode(nextX, nextY);
+      if (node && !node.wall) {
+        return {
+          x: nextX,
+          y: nextY,
+          wall: false,
+          previous: currentNode,
+          totalCost: (currentNode.totalCost || 0) + 1,
+          heuristic: heuristicEuclidean(
+            { x: nextX, y: nextY, wall: false },
+            goalNode
+          ),
+        } as Node;
+      }
+      return null;
+    })
+    .filter((node): node is Node => !!node);
 
-  return successorNodes.map((successor) => ({
-    ...successor,
-    previous: currentNode,
-    totalCost: (currentNode.totalCost || 0) + 1,
-    heuristic: heuristicEuclidean(successor, goalNode),
-  }));
+  return successorNodes;
+};
+
+//Successors for proposed algo
+const propsuccessors = (currentNode: Node, goalNode: Node): Node[] => {
+  const adjacent = [
+    { x: 0, y: -1 }, //Up
+    { x: 0, y: 1 }, //Down
+    { x: -1, y: 0 }, //Left
+    { x: 1, y: 0 }, //Right
+    { x: -1, y: -1 }, // Up-Left
+    { x: 1, y: -1 }, // Up-Right
+    { x: -1, y: 1 }, // Down-Left
+    { x: 1, y: 1 }, // Down-Right
+  ];
+
+  const propsuccessorNodes = adjacent
+    .map(({ x: dx, y: dy }) => {
+      const nextX = currentNode.x + dx;
+      const nextY = currentNode.y + dy;
+      const node = getNode(nextX, nextY);
+      if (node && !node.wall) {
+        return {
+          x: nextX,
+          y: nextY,
+          wall: false,
+          previous: currentNode,
+          totalCost: (currentNode.totalCost || 0) + 1,
+          heuristic: heuristicOctile(
+            { x: nextX, y: nextY, wall: false },
+            goalNode
+          ),
+        } as Node;
+      }
+      return null;
+    })
+    .filter((node): node is Node => !!node);
+
+  return propsuccessorNodes;
 };
 
 const isSameLocation = (source: Cell, target: Cell) => {
@@ -344,23 +396,23 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   let visitedNodesCounter = 0;
 
   while (openList.length > 0) {
-    // Step 3: Remove the node with the lowest heuristic value from the open list
+    // Sort open list based on total cost (f = g + h)
     openList.sort(
-      (a, b) => heuristicOctile(a, goalNode) - heuristicOctile(b, goalNode)
+      (a, b) =>
+        (a.totalCost || 0) + a.heuristic - (b.totalCost || 0) - b.heuristic!
     );
+
     const currentNode = openList.shift();
 
     if (!currentNode) break;
 
-    // Step 4: Move the current node to the closed list
     closedList.push(currentNode);
 
-    // Step 5: Check if the current node is the goal node
     if (isSameLocation(currentNode, goalNode)) {
-      // Path found, update UI and return path
+      // Path found
       updateVisitedNodesInput(visitedNodesCounter);
-      const endTime = performance.now(); // Capture end time when the goal is found
-      const duration = endTime - startTime; // Calculate duration in milliseconds
+      const endTime = performance.now();
+      const duration = endTime - startTime;
       const minutes = Math.floor(duration / 1000 / 60)
         .toString()
         .padStart(2, "0"); // Convert to minutes and format
@@ -398,7 +450,7 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
     }
 
     // Step 6: Generate and add successors to the open list
-    const successorNodes = successors(currentNode, goalNode);
+    const successorNodes = propsuccessors(currentNode, goalNode);
 
     for (const successor of successorNodes) {
       if (
@@ -712,13 +764,3 @@ document.addEventListener("DOMContentLoaded", () => {
     clearAll();
   });
 });
-
-//The Random Coder template code for pathfinding
-// const newLocal = pathFind(
-//   { x: 1, y: 1, wall: false },
-//   { x: 2, y: 4, wall: false }
-// ).then((result) => {
-//   const output = document.getElementById("output");
-//   output.innerText = result;
-// }
-// );

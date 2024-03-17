@@ -309,7 +309,7 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
     // Step 5: Check if the current node is the goal node
     if (isSameLocation(currentNode, goalNode)) {
       // Path found, update UI and return path
-      updateVisitedNodesInput(visitedNodesCounter);
+      
       const endTime = performance.now(); // Capture end time when the goal is found
       const duration = endTime - startTime; // Calculate duration in milliseconds
       const minutes = Math.floor(duration / 1000 / 60)
@@ -345,6 +345,7 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
         ),
         "yellow"
       );
+      updateVisitedNodesInput(visitedNodesCounter);
       return `Found path with length ${foundPath.length}`;
     }
 
@@ -381,8 +382,8 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
+
   // No path found
-  updateVisitedNodesInput(visitedNodesCounter);
   return "Path not found";
 };
 
@@ -574,7 +575,7 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
           ),
           "yellow"
         );
-
+        updateVisitedNodesInput(visitedNodesCounter);
         return `Found path with length ${foundPath.length}`;
       } else {
         // Path found
@@ -612,7 +613,7 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
           ),
           "yellow"
         );
-
+        
         return `Found path with length ${foundPath.length}`;
       }
     }
@@ -681,7 +682,6 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   }
 
   // No path found
-  updateVisitedNodesInput(visitedNodesCounter);
   return "Path not found";
 };
 
@@ -779,7 +779,6 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
       );
       await new Promise((resolve) => setTimeout(resolve, 0));
     } while (openList.length > 0 && openList.length < 10000);
-    updateVisitedNodesInput(visitedNodesCounter);
     return `Path not found`;
   } catch (error) {
     if (error.message === "Goal node is blocked by walls") {
@@ -798,6 +797,7 @@ function updateVisitedNodesInput(count: number) {
     visitedNodesInput.value = count.toString();
   }
 }
+
 
 //Function to Reset path
 function resetPath() {
@@ -906,6 +906,22 @@ function clearAll() {
 //For HTML Interactions
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("find-path").addEventListener("click", function () {
+      // Clear 'path-length' input
+  const pathLengthInput = document.getElementById("path-length");
+  if (pathLengthInput instanceof HTMLInputElement) {
+    pathLengthInput.value = ""; // Set to empty or default value
+  }
+
+  // Clear 'visited-nodes' input
+  const visitedNodesInput = document.getElementById("visited-nodes");
+  if (visitedNodesInput instanceof HTMLInputElement) {
+    visitedNodesInput.value = ""; // Set to empty or default value
+  }
+  // Clear 'path-time' input
+  const pathTimeInput = document.getElementById("path-time");
+  if (pathTimeInput instanceof HTMLInputElement) {
+    pathTimeInput.value = ""; // Set to empty or default value
+  }
     startTime = performance.now();
     const algorithmSelector = document.querySelector(
       ".drpdwnAlgo"

@@ -488,113 +488,257 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 //   return "Path not found";
 // };
 
-//Prop GBFS Algo
+//Prop GBFS Algo 2
+// const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
+//   let startTime: number | undefined; // Declare startTime as number or undefined
+//   startTime = performance.now(); // Initialize startTime when the algorithm starts
+
+//   const forwardOpenList: Node[] = [startNode];
+//   const backwardOpenList: Node[] = [goalNode];
+//   const forwardClosedList: Node[] = [];
+//   const backwardClosedList: Node[] = [];
+//   let visitedNodesCounter = 0;
+
+//   while (forwardOpenList.length > 0 && backwardOpenList.length > 0) {
+//     // Remove the node with the lowest heuristic value from the forward open list
+//     forwardOpenList.sort(
+//       (a, b) =>
+//         (a.totalCost || 0) + a.heuristic - (b.totalCost || 0) - b.heuristic!
+//     );
+//     const forwardCurrentNode = forwardOpenList.shift();
+
+//     // Remove the node with the lowest heuristic value from the backward open list
+//     backwardOpenList.sort(
+//       (a, b) =>
+//         (a.totalCost || 0) + a.heuristic - (b.totalCost || 0) - b.heuristic!
+//     );
+//     const backwardCurrentNode = backwardOpenList.shift();
+
+//     // Expand the forward node
+//     if (forwardCurrentNode) {
+//       forwardClosedList.push(forwardCurrentNode);
+//       visitedNodesCounter++;
+
+//       const intersectionNode = backwardOpenList.find((node) =>
+//         isSameLocation(node, forwardCurrentNode)
+//       );
+//       if (intersectionNode) {
+//         updateVisitedNodesInput(visitedNodesCounter);
+//         const endTime = performance.now();
+//         return "Path found";
+//       }
+
+//       const forwardSuccessorNodes = propsuccessors(
+//         forwardCurrentNode,
+//         goalNode
+//       );
+//       for (const successor of forwardSuccessorNodes) {
+//         if (
+//           ![...forwardOpenList, ...forwardClosedList].some((node) =>
+//             isWorseDuplicate(successor, node)
+//           )
+//         ) {
+//           forwardOpenList.push(successor);
+//         }
+//       }
+//     }
+
+//     // Expand the backward node
+//     if (backwardCurrentNode) {
+//       backwardClosedList.push(backwardCurrentNode);
+//       visitedNodesCounter++;
+
+//       const intersectionNode = forwardOpenList.find((node) =>
+//         isSameLocation(node, backwardCurrentNode)
+//       );
+//       if (intersectionNode) {
+//         updateVisitedNodesInput(visitedNodesCounter);
+//         const endTime = performance.now();
+//         return "Path found";
+//       }
+
+//       const backwardSuccessorNodes = propsuccessors(
+//         backwardCurrentNode,
+//         startNode
+//       );
+//       for (const successor of backwardSuccessorNodes) {
+//         if (
+//           ![...backwardOpenList, ...backwardClosedList].some((node) =>
+//             isWorseDuplicate(successor, node)
+//           )
+//         ) {
+//           backwardOpenList.push(successor);
+//         }
+//       }
+//     }
+
+//     // Terminate the forward search if it reaches where the backward search stopped
+//     if (forwardOpenList.length === 0 && backwardOpenList.length > 0) {
+//       break;
+//     }
+
+//     // Visualize exploration
+//     paintCells(
+//       foundPath.filter(
+//         (node) =>
+//           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+//       ),
+//       "yellow"
+//     );
+
+//     paintCells(
+//       forwardClosedList.filter(
+//         (node) =>
+//           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+//       ),
+//       "#00f"
+//     );
+//     paintCells(
+//       forwardOpenList.filter(
+//         (node) =>
+//           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+//       ),
+//       "pink"
+//     );
+
+//     paintCells(
+//       backwardClosedList.filter(
+//         (node) =>
+//           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+//       ),
+//       "#00f"
+//     );
+//     paintCells(
+//       backwardOpenList.filter(
+//         (node) =>
+//           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+//       ),
+//       "pink"
+//     );
+
+//     await new Promise((resolve) => setTimeout(resolve, 0));
+//   }
+
+//   // No path found
+//   updateVisitedNodesInput(visitedNodesCounter);
+//   return "Path not found";
+// };
+
 const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   let startTime: number | undefined; // Declare startTime as number or undefined
   startTime = performance.now(); // Initialize startTime when the algorithm starts
 
-  const forwardOpenList: Node[] = [startNode];
-  const backwardOpenList: Node[] = [goalNode];
-  const forwardClosedList: Node[] = [];
-  const backwardClosedList: Node[] = [];
+  const openList: Node[] = [startNode];
+  const closedList: Node[] = [];
   let visitedNodesCounter = 0;
 
-  while (forwardOpenList.length > 0 && backwardOpenList.length > 0) {
-    // Remove the node with the lowest heuristic value from the forward open list
-    forwardOpenList.sort(
-      (a, b) =>
-        (a.totalCost || 0) + a.heuristic - (b.totalCost || 0) - b.heuristic!
-    );
-    const forwardCurrentNode = forwardOpenList.shift();
+  const backwardOpenList: Node[] = [goalNode];
+  const backwardClosedList: Node[] = [];
 
-    // Remove the node with the lowest heuristic value from the backward open list
+  while (openList.length > 0 && backwardOpenList.length > 0) {
+    // Step 3: Remove the node with the lowest total cost + heuristic value from the open list
+    openList.sort(
+      (a, b) =>
+        (a.totalCost || 0) + a.heuristic! - (b.totalCost || 0) - b.heuristic!
+    );
     backwardOpenList.sort(
       (a, b) =>
-        (a.totalCost || 0) + a.heuristic - (b.totalCost || 0) - b.heuristic!
+        (a.totalCost || 0) + a.heuristic! - (b.totalCost || 0) - b.heuristic!
     );
+
+    const forwardCurrentNode = openList.shift();
     const backwardCurrentNode = backwardOpenList.shift();
 
-    // Expand the forward node
-    if (forwardCurrentNode) {
-      forwardClosedList.push(forwardCurrentNode);
-      visitedNodesCounter++;
+    if (!forwardCurrentNode || !backwardCurrentNode) break;
 
-      const intersectionNode = backwardOpenList.find((node) =>
-        isSameLocation(node, forwardCurrentNode)
-      );
-      if (intersectionNode) {
-        updateVisitedNodesInput(visitedNodesCounter);
-        const endTime = performance.now();
-        return "Path found";
+    // Step 4: Move the current node to the closed list
+    closedList.push(forwardCurrentNode);
+    backwardClosedList.push(backwardCurrentNode);
+
+    // Step 5: Check if the current node is the goal node
+    if (
+      isSameLocation(forwardCurrentNode, goalNode) ||
+      isSameLocation(backwardCurrentNode, startNode)
+    ) {
+      // Path found
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      const minutes = Math.floor(duration / 1000 / 60)
+        .toString()
+        .padStart(2, "0");
+      const seconds = Math.floor((duration / 1000) % 60)
+        .toString()
+        .padStart(2, "0");
+      const milliseconds = Math.floor(duration % 1000)
+        .toString()
+        .padStart(3, "0");
+      const displayMilliseconds = milliseconds.substring(0, 2);
+
+      const forwardPath = getPath(forwardCurrentNode);
+      const backwardPath = getPath(backwardCurrentNode).reverse();
+      const foundPath = forwardPath.concat(backwardPath.slice(1));
+
+      const pathLengthInput = document.getElementById("path-length");
+      const pathTimeInput = document.getElementById("path-time");
+
+      if (
+        pathLengthInput instanceof HTMLInputElement &&
+        pathTimeInput instanceof HTMLInputElement
+      ) {
+        pathLengthInput.value = foundPath.length.toString();
+        pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`;
       }
 
-      const forwardSuccessorNodes = propsuccessors(
-        forwardCurrentNode,
-        goalNode
+      paintCells(
+        foundPath.filter(
+          (node) =>
+            !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+        ),
+        "yellow"
       );
-      for (const successor of forwardSuccessorNodes) {
-        if (
-          ![...forwardOpenList, ...forwardClosedList].some((node) =>
-            isWorseDuplicate(successor, node)
-          )
-        ) {
-          forwardOpenList.push(successor);
-        }
+
+      return `Found path with length ${foundPath.length}`;
+    }
+
+    // Step 6: Generate and add successors to the open list using Jump Point Search (JPS)
+    const forwardSuccessorNodes = propsuccessors(forwardCurrentNode, goalNode);
+    const backwardSuccessorNodes = propsuccessors(
+      backwardCurrentNode,
+      startNode
+    );
+
+    for (const successor of forwardSuccessorNodes) {
+      if (
+        ![...openList, ...closedList].some((node) =>
+          isWorseDuplicate(successor, node)
+        )
+      ) {
+        openList.push(successor);
+        visitedNodesCounter++;
       }
     }
 
-    // Expand the backward node
-    if (backwardCurrentNode) {
-      backwardClosedList.push(backwardCurrentNode);
-      visitedNodesCounter++;
-
-      const intersectionNode = forwardOpenList.find((node) =>
-        isSameLocation(node, backwardCurrentNode)
-      );
-      if (intersectionNode) {
-        updateVisitedNodesInput(visitedNodesCounter);
-        const endTime = performance.now();
-        return "Path found";
+    for (const successor of backwardSuccessorNodes) {
+      if (
+        ![...backwardOpenList, ...backwardClosedList].some((node) =>
+          isWorseDuplicate(successor, node)
+        )
+      ) {
+        backwardOpenList.push(successor);
+        visitedNodesCounter++;
       }
-
-      const backwardSuccessorNodes = propsuccessors(
-        backwardCurrentNode,
-        startNode
-      );
-      for (const successor of backwardSuccessorNodes) {
-        if (
-          ![...backwardOpenList, ...backwardClosedList].some((node) =>
-            isWorseDuplicate(successor, node)
-          )
-        ) {
-          backwardOpenList.push(successor);
-        }
-      }
-    }
-
-    // Terminate the forward search if it reaches where the backward search stopped
-    if (forwardOpenList.length === 0 && backwardOpenList.length > 0) {
-      break;
     }
 
     // Visualize exploration
     paintCells(
-      foundPath.filter(
-        (node) =>
-          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
-      ),
-      "yellow"
-    );
-
-    paintCells(
-      forwardClosedList.filter(
+      closedList.filter(
         (node) =>
           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
       ),
       "#00f"
     );
     paintCells(
-      forwardOpenList.filter(
+      openList.filter(
         (node) =>
           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
       ),

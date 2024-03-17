@@ -387,92 +387,229 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 };
 
 //Prop GBFS Algo
+// const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
+//   let startTime: number | undefined; // Declare startTime as number or undefined
+//   startTime = performance.now(); // Initialize startTime when the algorithm starts
+
+//   const openList: Node[] = [startNode];
+//   const closedList: Node[] = [];
+//   let visitedNodesCounter = 0;
+
+//   while (openList.length > 0) {
+//       // Step 3: Remove the node with the lowest total cost + heuristic value from the open list
+//       openList.sort(
+//           (a, b) => (a.totalCost || 0) + a.heuristic! - (b.totalCost || 0) - b.heuristic!
+//       );
+
+//       const currentNode = openList.shift();
+
+//       if (!currentNode) break;
+
+//       // Step 4: Move the current node to the closed list
+//       closedList.push(currentNode);
+
+//       // Step 5: Check if the current node is the goal node
+//       if (isSameLocation(currentNode, goalNode)) {
+//           // Path found
+//           updateVisitedNodesInput(visitedNodesCounter);
+//           const endTime = performance.now();
+//           const duration = endTime - startTime;
+//           const minutes = Math.floor(duration / 1000 / 60)
+//               .toString()
+//               .padStart(2, "0"); // Convert to minutes and format
+//           const seconds = Math.floor((duration / 1000) % 60)
+//               .toString()
+//               .padStart(2, "0"); // Get remaining seconds and format
+//           const milliseconds = Math.floor(duration % 1000)
+//               .toString()
+//               .padStart(3, "0"); // Correctly get full milliseconds in three digits
+
+//           // For consistency and if you only need two digits for milliseconds, consider using only the first two digits
+//           // However, displaying full milliseconds (three digits) is more common for precise timing
+//           const displayMilliseconds = milliseconds.substring(0, 2); // Taking first two digits for MM:SS.mm format if desired
+
+//           const foundPath = getPath(currentNode);
+//           const pathLengthInput = document.getElementById("path-length");
+//           const pathTimeInput = document.getElementById("path-time"); // Get the path-time input element
+
+//           if (
+//               pathLengthInput instanceof HTMLInputElement &&
+//               pathTimeInput instanceof HTMLInputElement
+//           ) {
+//               pathLengthInput.value = foundPath.length.toString(); // Update the path length value
+//               pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`; // Update the path time value in MM:SS.mm format
+//           }
+
+//           paintCells(
+//               foundPath.filter(
+//                   (node) =>
+//                       !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+//               ),
+//               "yellow"
+//           );
+//           return `Found path with length ${foundPath.length}`;
+//       }
+
+//       // Step 6: Generate and add successors to the open list using Jump Point Search (JPS)
+//       const successorNodes = propsuccessors(currentNode, goalNode);
+
+//       for (const successor of successorNodes) {
+//           if (
+//               ![...openList, ...closedList].some((node) =>
+//                   isWorseDuplicate(successor, node)
+//               )
+//           ) {
+//               openList.push(successor);
+//               visitedNodesCounter++;
+//           }
+//       }
+
+//       // Visualize exploration
+//       paintCells(
+//           closedList.filter(
+//               (node) =>
+//                   !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+//           ),
+//           "#00f"
+//       );
+//       paintCells(
+//           openList.filter(
+//               (node) =>
+//                   !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+//           ),
+//           "pink"
+//       );
+
+//       await new Promise((resolve) => setTimeout(resolve, 0));
+//   }
+
+//   // No path found
+//   updateVisitedNodesInput(visitedNodesCounter);
+//   return "Path not found";
+// };
+
+//Prop GBFS Algo
 const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   let startTime: number | undefined; // Declare startTime as number or undefined
   startTime = performance.now(); // Initialize startTime when the algorithm starts
 
-  const openList: Node[] = [startNode];
-  const closedList: Node[] = [];
+  const forwardOpenList: Node[] = [startNode];
+  const backwardOpenList: Node[] = [goalNode];
+  const forwardClosedList: Node[] = [];
+  const backwardClosedList: Node[] = [];
   let visitedNodesCounter = 0;
 
-  while (openList.length > 0) {
-    // Sort open list based on total cost (f = g + h)
-    openList.sort(
+  while (forwardOpenList.length > 0 && backwardOpenList.length > 0) {
+    // Remove the node with the lowest heuristic value from the forward open list
+    forwardOpenList.sort(
       (a, b) =>
         (a.totalCost || 0) + a.heuristic - (b.totalCost || 0) - b.heuristic!
     );
+    const forwardCurrentNode = forwardOpenList.shift();
 
-    const currentNode = openList.shift();
+    // Remove the node with the lowest heuristic value from the backward open list
+    backwardOpenList.sort(
+      (a, b) =>
+        (a.totalCost || 0) + a.heuristic - (b.totalCost || 0) - b.heuristic!
+    );
+    const backwardCurrentNode = backwardOpenList.shift();
 
-    if (!currentNode) break;
+    // Expand the forward node
+    if (forwardCurrentNode) {
+      forwardClosedList.push(forwardCurrentNode);
+      visitedNodesCounter++;
 
-    closedList.push(currentNode);
-
-    if (isSameLocation(currentNode, goalNode)) {
-      // Path found
-      updateVisitedNodesInput(visitedNodesCounter);
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-      const minutes = Math.floor(duration / 1000 / 60)
-        .toString()
-        .padStart(2, "0"); // Convert to minutes and format
-      const seconds = Math.floor((duration / 1000) % 60)
-        .toString()
-        .padStart(2, "0"); // Get remaining seconds and format
-      const milliseconds = Math.floor(duration % 1000)
-        .toString()
-        .padStart(3, "0"); // Correctly get full milliseconds in three digits
-
-      // For consistency and if you only need two digits for milliseconds, consider using only the first two digits
-      // However, displaying full milliseconds (three digits) is more common for precise timing
-      const displayMilliseconds = milliseconds.substring(0, 2); // Taking first two digits for MM:SS.mm format if desired
-
-      const foundPath = getPath(currentNode);
-      const pathLengthInput = document.getElementById("path-length");
-      const pathTimeInput = document.getElementById("path-time"); // Get the path-time input element
-
-      if (
-        pathLengthInput instanceof HTMLInputElement &&
-        pathTimeInput instanceof HTMLInputElement
-      ) {
-        pathLengthInput.value = foundPath.length.toString(); // Update the path length value
-        pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`; // Update the path time value in MM:SS.mm format
+      const intersectionNode = backwardOpenList.find((node) =>
+        isSameLocation(node, forwardCurrentNode)
+      );
+      if (intersectionNode) {
+        updateVisitedNodesInput(visitedNodesCounter);
+        const endTime = performance.now();
+        return "Path found";
       }
 
-      paintCells(
-        foundPath.filter(
-          (node) =>
-            !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
-        ),
-        "yellow"
+      const forwardSuccessorNodes = propsuccessors(
+        forwardCurrentNode,
+        goalNode
       );
-      return `Found path with length ${foundPath.length}`;
+      for (const successor of forwardSuccessorNodes) {
+        if (
+          ![...forwardOpenList, ...forwardClosedList].some((node) =>
+            isWorseDuplicate(successor, node)
+          )
+        ) {
+          forwardOpenList.push(successor);
+        }
+      }
     }
 
-    // Step 6: Generate and add successors to the open list
-    const successorNodes = propsuccessors(currentNode, goalNode);
+    // Expand the backward node
+    if (backwardCurrentNode) {
+      backwardClosedList.push(backwardCurrentNode);
+      visitedNodesCounter++;
 
-    for (const successor of successorNodes) {
-      if (
-        ![...openList, ...closedList].some((node) =>
-          isWorseDuplicate(successor, node)
-        )
-      ) {
-        openList.push(successor);
-        visitedNodesCounter++;
+      const intersectionNode = forwardOpenList.find((node) =>
+        isSameLocation(node, backwardCurrentNode)
+      );
+      if (intersectionNode) {
+        updateVisitedNodesInput(visitedNodesCounter);
+        const endTime = performance.now();
+        return "Path found";
       }
+
+      const backwardSuccessorNodes = propsuccessors(
+        backwardCurrentNode,
+        startNode
+      );
+      for (const successor of backwardSuccessorNodes) {
+        if (
+          ![...backwardOpenList, ...backwardClosedList].some((node) =>
+            isWorseDuplicate(successor, node)
+          )
+        ) {
+          backwardOpenList.push(successor);
+        }
+      }
+    }
+
+    // Terminate the forward search if it reaches where the backward search stopped
+    if (forwardOpenList.length === 0 && backwardOpenList.length > 0) {
+      break;
     }
 
     // Visualize exploration
     paintCells(
-      closedList.filter(
+      foundPath.filter(
+        (node) =>
+          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+      ),
+      "yellow"
+    );
+
+    paintCells(
+      forwardClosedList.filter(
         (node) =>
           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
       ),
       "#00f"
     );
     paintCells(
-      openList.filter(
+      forwardOpenList.filter(
+        (node) =>
+          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+      ),
+      "pink"
+    );
+
+    paintCells(
+      backwardClosedList.filter(
+        (node) =>
+          !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+      ),
+      "#00f"
+    );
+    paintCells(
+      backwardOpenList.filter(
         (node) =>
           !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
       ),

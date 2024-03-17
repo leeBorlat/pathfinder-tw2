@@ -604,6 +604,7 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
           pathLengthInput.value = foundPath.length.toString();
           pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`;
         }
+        updateVisitedNodesInput(visitedNodesCounter);
 
         paintCells(
           foundPath.filter(
@@ -618,7 +619,7 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
       }
     }
 
-    // Step 6: Generate and add successors to the open list using Jump Point Search (JPS)
+    // Step 6: Generate and add successors to the open list
     const forwardSuccessorNodes = propsuccessors(forwardCurrentNode, goalNode);
     const backwardSuccessorNodes = propsuccessors(
       backwardCurrentNode,

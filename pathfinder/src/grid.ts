@@ -1,10 +1,19 @@
 import { mazeData } from "./mazeData";
+// import { mapData } from "./mapData";
 
 interface Cell {
   x: number;
   y: number;
   wall: boolean;
 }
+
+// const map = mapData.map((row, rowIndex) => {
+//   return row.split("").map((cell, cellIndex) => ({
+//     x: cellIndex,
+//     y: rowIndex,
+//     wall: cell === "#",
+//   }));
+// });
 
 const maze = mazeData.map((row, rowIndex) => {
   return row.split("").map((cell, cellIndex) => ({

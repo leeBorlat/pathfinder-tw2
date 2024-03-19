@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
     <title>GBFS Algorithm Visualizer</title>
     <style>
       html {
@@ -190,6 +191,16 @@
       .explored-icon {
         background-color: blue;
       }
+
+      .togglePanelBtn {
+        width: 150px;
+        height: 30px;
+        margin-left: 2450px;
+        font-size: 18px;
+        border-radius: 5px;
+        background-color: rgb(255, 227, 70);
+        cursor: pointer;
+      }
     </style>
     <meta name="description" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -198,6 +209,7 @@
   <body>
     <nav>
       <h1>GBFS Algorithm Visualizer</h1>
+      <button id="togglePanelBtn" class="togglePanelBtn">Toggle Panel</button>
     </nav>
 
     <canvas id="canvas"></canvas>
@@ -255,8 +267,6 @@
       <div class="maps">
         <p>Choose a map:</p>
         <select class="mapsdd" id="mapsdd">
-          <option value="baldurs" id="baldurs">Baldur's Gate</option>
-          <option value="warcraft" id="warcraft">Warcraft III</option>
           <option value="dragon" id="dragon">Dragon Age</option>
         </select>
         <button id="chooseMap" class="mapbtn">Generate Map</button>
@@ -277,5 +287,23 @@
     <script src="generateMaze.js" async defer></script>
     <script src="index.ts" async defer></script>
     <script src="index.js" async defer></script>
+
+    <script>
+      // Get a reference to the panel
+      var panel = document.getElementById("panel");
+
+      // Get a reference to the toggle button
+      var toggleBtn = document.getElementById("togglePanelBtn");
+
+      // Add an event listener to the toggle button
+      toggleBtn.addEventListener("click", function () {
+        // Toggle the panel's visibility
+        if (panel.style.display === "none") {
+          panel.style.display = "block";
+        } else {
+          panel.style.display = "none";
+        }
+      });
+    </script>
   </body>
 </html>

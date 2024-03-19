@@ -598,6 +598,8 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 //   // No path found
 //   return "Path not found";
 // };
+
+//FINAL PROP GBFS
 const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   let startTime: number | undefined; // Declare startTime as number or undefined
   startTime = performance.now(); // Initialize startTime when the algorithm starts
@@ -660,18 +662,24 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
           isSameLocation(node, backwardNode)
         )
       );
-     // Reconstruct the forward path to the intersection node
+      // Reconstruct the forward path to the intersection node
       let forwardPathToIntersection = getPath(intersectionNode!);
 
-  // Find the node in the backward path that corresponds to the intersection
-      const backwardIntersectionNode = backwardClosedList.find((node) => isSameLocation(node, intersectionNode));
-  
-  // Reconstruct the backward path from the intersection to the goal, and reverse it
-      let backwardPathFromIntersectionToGoal = getPath(backwardIntersectionNode!).reverse();
+      // Find the node in the backward path that corresponds to the intersection
+      const backwardIntersectionNode = backwardClosedList.find((node) =>
+        isSameLocation(node, intersectionNode)
+      );
 
-  // Combine the paths to form the complete path
-      const foundPath = [...forwardPathToIntersection, ...backwardPathFromIntersectionToGoal.slice(1)]; // slice(1) to avoid duplicating the intersection node
+      // Reconstruct the backward path from the intersection to the goal, and reverse it
+      let backwardPathFromIntersectionToGoal = getPath(
+        backwardIntersectionNode!
+      ).reverse();
 
+      // Combine the paths to form the complete path
+      const foundPath = [
+        ...forwardPathToIntersection,
+        ...backwardPathFromIntersectionToGoal.slice(1),
+      ]; // slice(1) to avoid duplicating the intersection node
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -719,10 +727,9 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 
       const foundPath = forwardPath.concat(backwardPath.slice(1)); // Skip the first element of backwardPath to avoid duplication of the meeting point
 
-
       const pathLengthInput = document.getElementById("path-length");
       const pathTimeInput = document.getElementById("path-time");
-      
+
       if (
         pathLengthInput instanceof HTMLInputElement &&
         pathTimeInput instanceof HTMLInputElement
@@ -730,14 +737,13 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
         pathLengthInput.value = foundPath.length.toString(); // This will now represent the total path length correctly
         pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`;
       }
-      
+
       paintCells(foundPath, "yellow"); // This now paints the entire path
       updateVisitedNodesInput(visitedNodesCounter);
       return `Found path with length ${foundPath.length}`;
     }
 
-
-    // Step 6: Generate and add successors to the open 
+    // Step 6: Generate and add successors to the open
     const forwardSuccessorNodes = propsuccessors(forwardCurrentNode, goalNode);
     const backwardSuccessorNodes = propsuccessors(
       backwardCurrentNode,

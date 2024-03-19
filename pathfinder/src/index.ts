@@ -443,6 +443,7 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 };
 
 //Prop GBFS
+
 // const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 //   let startTime: number | undefined; // Declare startTime as number or undefined
 //   startTime = performance.now(); // Initialize startTime when the algorithm starts
@@ -460,7 +461,7 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 //   let forwardPath: Node[] = [];
 //   let backwardPath: Node[] = [];
 
-//   while (openList.length > 0 && backwardOpenList.length > 0) {
+//   while (true) {
 //     // Step 3: Remove the node with the lowest total cost + heuristic value from the open list
 //     openList.sort(
 //       (a, b) =>
@@ -491,85 +492,44 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 //       backwardPath = getPath(backwardCurrentNode).reverse();
 //     }
 
-//     if (forwardPathFound && backwardPathFound) {
-//       // Compare the lengths of the two paths
-//       if (forwardPath.length <= backwardPath.length) {
-//         // Path found
-//         const endTime = performance.now();
-//         const duration = endTime - startTime;
-//         const minutes = Math.floor(duration / 1000 / 60)
-//           .toString()
-//           .padStart(2, "0");
-//         const seconds = Math.floor((duration / 1000) % 60)
-//           .toString()
-//           .padStart(2, "0");
-//         const milliseconds = Math.floor(duration % 1000)
-//           .toString()
-//           .padStart(3, "0");
-//         const displayMilliseconds = milliseconds.substring(0, 2);
+//     //Whichever path finishes first
+//     if (forwardPathFound || backwardPathFound) {
+//       // Path found
+//       const endTime = performance.now();
+//       const duration = endTime - startTime;
+//       const minutes = Math.floor(duration / 1000 / 60)
+//         .toString()
+//         .padStart(2, "0");
+//       const seconds = Math.floor((duration / 1000) % 60)
+//         .toString()
+//         .padStart(2, "0");
+//       const milliseconds = Math.floor(duration % 1000)
+//         .toString()
+//         .padStart(3, "0");
+//       const displayMilliseconds = milliseconds.substring(0, 2);
 
-//         const foundPath = forwardPath;
+//       const foundPath = forwardPathFound ? forwardPath : backwardPath;
 
-//         const pathLengthInput = document.getElementById("path-length");
-//         const pathTimeInput = document.getElementById("path-time");
+//       const pathLengthInput = document.getElementById("path-length");
+//       const pathTimeInput = document.getElementById("path-time");
 
-//         if (
-//           pathLengthInput instanceof HTMLInputElement &&
-//           pathTimeInput instanceof HTMLInputElement
-//         ) {
-//           pathLengthInput.value = foundPath.length.toString();
-//           pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`;
-//         }
-
-//         paintCells(
-//           foundPath.filter(
-//             (node) =>
-//               !isSameLocation(node, startNode) &&
-//               !isSameLocation(node, goalNode)
-//           ),
-//           "yellow"
-//         );
-//         updateVisitedNodesInput(visitedNodesCounter);
-//         return `Found path with length ${foundPath.length}`;
-//       } else {
-//         // Path found
-//         const endTime = performance.now();
-//         const duration = endTime - startTime;
-//         const minutes = Math.floor(duration / 1000 / 60)
-//           .toString()
-//           .padStart(2, "0");
-//         const seconds = Math.floor((duration / 1000) % 60)
-//           .toString()
-//           .padStart(2, "0");
-//         const milliseconds = Math.floor(duration % 1000)
-//           .toString()
-//           .padStart(3, "0");
-//         const displayMilliseconds = milliseconds.substring(0, 2);
-
-//         const foundPath = backwardPath;
-
-//         const pathLengthInput = document.getElementById("path-length");
-//         const pathTimeInput = document.getElementById("path-time");
-
-//         if (
-//           pathLengthInput instanceof HTMLInputElement &&
-//           pathTimeInput instanceof HTMLInputElement
-//         ) {
-//           pathLengthInput.value = foundPath.length.toString();
-//           pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`;
-//         }
-
-//         paintCells(
-//           foundPath.filter(
-//             (node) =>
-//               !isSameLocation(node, startNode) &&
-//               !isSameLocation(node, goalNode)
-//           ),
-//           "yellow"
-//         );
-
-//         return `Found path with length ${foundPath.length}`;
+//       if (
+//         pathLengthInput instanceof HTMLInputElement &&
+//         pathTimeInput instanceof HTMLInputElement
+//       ) {
+//         pathLengthInput.value = foundPath.length.toString();
+//         pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`;
 //       }
+
+//       paintCells(
+//         foundPath.filter(
+//           (node) =>
+//             !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+//         ),
+//         "yellow"
+//       );
+//       updateVisitedNodesInput(visitedNodesCounter);
+//       return `Found path with length ${foundPath.length}`;
 //     }
 
 //     // Step 6: Generate and add successors to the open list using Jump Point Search (JPS)
@@ -686,6 +646,73 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
       backwardPath = getPath(backwardCurrentNode).reverse();
     }
 
+    // Check for intersection
+    if (
+      closedList.some((node) =>
+        backwardClosedList.some((backwardNode) =>
+          isSameLocation(node, backwardNode)
+        )
+      )
+    ) {
+      const intersectionNode = closedList.find((node) =>
+        backwardClosedList.some((backwardNode) =>
+          isSameLocation(node, backwardNode)
+        )
+      );
+
+      const intersectionPath = [
+        ...getPath(intersectionNode!),
+        ...getPath(intersectionNode!).reverse().slice(1),
+      ];
+
+      const foundPath = [...forwardPath, ...intersectionPath, ...backwardPath];
+
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      const minutes = Math.floor(duration / 1000 / 60)
+        .toString()
+        .padStart(2, "0");
+      const seconds = Math.floor((duration / 1000) % 60)
+        .toString()
+        .padStart(2, "0");
+      const milliseconds = Math.floor(duration % 1000)
+        .toString()
+        .padStart(3, "0");
+      const displayMilliseconds = milliseconds.substring(0, 2);
+
+      const pathLengthInput = document.getElementById("path-length");
+      const pathTimeInput = document.getElementById("path-time");
+
+      if (
+        pathLengthInput instanceof HTMLInputElement &&
+        pathTimeInput instanceof HTMLInputElement
+      ) {
+        pathLengthInput.value = foundPath.length.toString();
+        pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`;
+      }
+
+      paintCells(
+        foundPath.filter(
+          (node) =>
+            !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+        ),
+        "yellow"
+      );
+
+      // Paint cells for backward search foundPath
+      paintCells(
+        backwardPath.filter(
+          (node) =>
+            !isSameLocation(node, startNode) && !isSameLocation(node, goalNode)
+        ),
+        "yellow"
+      );
+
+      updateVisitedNodesInput(visitedNodesCounter);
+      return `Found path with length ${foundPath.length}`;
+    }
+
+    //Whichever path finishes first
     if (forwardPathFound || backwardPathFound) {
       // Path found
       const endTime = performance.now();

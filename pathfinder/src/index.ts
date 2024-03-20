@@ -211,7 +211,6 @@ interface Node extends Cell {
   heuristic?: number;
   x: number;
   y: number;
-  depth: number;
   wall: boolean; // Add the 'wall' property to the Node interface
 }
 
@@ -1061,6 +1060,12 @@ const propsuccessorsWithObstacles = (
 
 //Stock Algo
 
+const calculateDepth = (node: Node | undefined): number => {
+  if (!node || !node.previous) return 0;
+  if (node.previous.heuristic !== node.heuristic) return 0;
+  return calculateDepth(node.previous) + 1;
+};
+
 const tieGBFS = async (
   startNode: Node,
   goalNode: Node,
@@ -1089,22 +1094,31 @@ const tieGBFS = async (
       const costB = (b.totalCost || 0) + b.heuristic!;
       if (costA !== costB) {
         return costA - costB; // Sort by f = g + h
-      } else if (a.depth !== b.depth) {
-        return b.depth - a.depth; // Sort by ld (largest depth)
       } else {
-        return Math.random() - 0.5; // Randomly select a bucket at each expansion (ro)
+        const depthA = calculateDepth(a);
+        const depthB = calculateDepth(b);
+        if (depthA !== depthB) {
+          return depthB - depthA; // Sort by last depth (ld)
+        } else {
+          return Math.random() - 0.5; // Randomly select a node within the same depth bucket (ro)
+        }
       }
     });
 
+    // Similar sorting for backwardOpenList
     backwardOpenList.sort((a, b) => {
       const costA = (a.totalCost || 0) + a.heuristic!;
       const costB = (b.totalCost || 0) + b.heuristic!;
       if (costA !== costB) {
         return costA - costB; // Sort by f = g + h
-      } else if (a.depth !== b.depth) {
-        return b.depth - a.depth; // Sort by ld (largest depth)
       } else {
-        return Math.random() - 0.5; // Randomly select a bucket at each expansion (ro)
+        const depthA = calculateDepth(a);
+        const depthB = calculateDepth(b);
+        if (depthA !== depthB) {
+          return depthB - depthA; // Sort by last depth (ld)
+        } else {
+          return Math.random() - 0.5; // Randomly select a node within the same depth bucket (ro)
+        }
       }
     });
 
@@ -1236,26 +1250,22 @@ const tieGBFS = async (
     );
 
     for (const successor of forwardSuccessorNodes) {
-      // Check for duplicates in the open and closed lists
       if (
         ![...openList, ...closedList].some((node) =>
           isWorseDuplicate(successor, node)
         )
       ) {
-        successor.depth = forwardCurrentNode.depth + 1; // Update depth
         openList.push(successor);
         visitedNodesCounter++;
       }
     }
 
     for (const successor of backwardSuccessorNodes) {
-      // Check for duplicates in the open and closed lists
       if (
         ![...backwardOpenList, ...backwardClosedList].some((node) =>
           isWorseDuplicate(successor, node)
         )
       ) {
-        successor.depth = backwardCurrentNode.depth + 1; // Update depth
         backwardOpenList.push(successor);
         visitedNodesCounter++;
       }

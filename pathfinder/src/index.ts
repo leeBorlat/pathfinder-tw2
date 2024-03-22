@@ -340,10 +340,12 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   let startTime: number | undefined; // Declare startTime as number or undefined
   startTime = performance.now(); // Initialize startTime when the algorithm starts
 
+  //Step 1: Place the starting node into the open list
   const openList: Node[] = [startNode];
   const closedList: Node[] = [];
   let visitedNodesCounter = 0;
 
+  //Step 2: If the open list is empty, return failure, else proceed to Step 3
   while (openList.length > 0) {
     // Step 3: Remove the node with the lowest heuristic value from the open list
     openList.sort(
@@ -354,8 +356,25 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 
     if (!currentNode) break;
 
-    // Step 4: Move the current node to the closed list
+    //Move the current node to the closed list
     closedList.push(currentNode);
+
+    // Step 4: Generate and add successors to the open list
+    const successorNodes = successors(currentNode, goalNode);
+
+    //Step 6: For each successor node, algorithm checks for evaluation function f(n),
+    //and then check if the node has been in either OPEN or CLOSED list.
+    //If the node has not been in both list, then add it to the OPEN list.
+    for (const successor of successorNodes) {
+      if (
+        ![...openList, ...closedList].some((node) =>
+          isWorseDuplicate(successor, node)
+        )
+      ) {
+        openList.push(successor);
+        visitedNodesCounter++;
+      }
+    }
 
     // Step 5: Check if the current node is the goal node
     if (isSameLocation(currentNode, goalNode)) {
@@ -373,9 +392,7 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
         .toString()
         .padStart(3, "0"); // Correctly get full milliseconds in three digits
 
-      // For consistency and if you only need two digits for milliseconds, consider using only the first two digits
-      // However, displaying full milliseconds (three digits) is more common for precise timing
-      const displayMilliseconds = milliseconds.substring(0, 2); // Taking first two digits for MM:SS.mm format if desired
+      const displayMilliseconds = milliseconds.substring(0, 2); // Taking first two digits for MM:SS.mm format
 
       const foundPath = getPath(currentNode);
       const pathLengthInput = document.getElementById("path-length");
@@ -400,20 +417,6 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
       return `Found path with length ${foundPath.length}`;
     }
 
-    // Step 6: Generate and add successors to the open list
-    const successorNodes = successors(currentNode, goalNode);
-
-    for (const successor of successorNodes) {
-      if (
-        ![...openList, ...closedList].some((node) =>
-          isWorseDuplicate(successor, node)
-        )
-      ) {
-        openList.push(successor);
-        visitedNodesCounter++;
-      }
-    }
-
     // Visualize exploration
     paintCells(
       closedList.filter(
@@ -434,6 +437,23 @@ const tradGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   }
 
   // No path found
+  const endTime = performance.now();
+  const duration = endTime - startTime;
+  const minutes = Math.floor(duration / 1000 / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.floor((duration / 1000) % 60)
+    .toString()
+    .padStart(2, "0");
+  const milliseconds = Math.floor(duration % 1000)
+    .toString()
+    .padStart(3, "0");
+  const displayMilliseconds = milliseconds.substring(0, 2);
+
+  const pathTimeInput = document.getElementById("path-time");
+  if (pathTimeInput instanceof HTMLInputElement) {
+    pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`;
+  }
   return "Path not found";
 };
 
@@ -599,6 +619,7 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   let startTime: number | undefined; // Declare startTime as number or undefined
   startTime = performance.now(); // Initialize startTime when the algorithm starts
 
+  //Step 1: Place the starting node into the open list
   const openList: Node[] = [startNode];
   const closedList: Node[] = [];
   let visitedNodesCounter = 0;
@@ -612,6 +633,7 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   let forwardPath: Node[] = [];
   let backwardPath: Node[] = [];
 
+  //Step 2: If the open list is empty, return failure. Else, proceed to Step 3.
   while (true) {
     // Step 3: Remove the node with the lowest total cost + heuristic value from the open list
     openList.sort(
@@ -628,9 +650,41 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 
     if (!forwardCurrentNode || !backwardCurrentNode) break;
 
-    // Step 4: Move the current node to the closed list
+    //Move the current node to the closed list
     closedList.push(forwardCurrentNode);
     backwardClosedList.push(backwardCurrentNode);
+
+    // Step 4: Generate and add successors to the open
+    const forwardSuccessorNodes = propsuccessors(forwardCurrentNode, goalNode);
+    const backwardSuccessorNodes = propsuccessors(
+      backwardCurrentNode,
+      startNode
+    );
+
+    for (const successor of forwardSuccessorNodes) {
+      //Step 6: For each successor node, algorithm checks for evaluation function f(n),
+      //and then check if the node has been in either OPEN or CLOSED list.
+      //If the node has not been in both list, then add it to the OPEN list.
+      if (
+        ![...openList, ...closedList].some((node) =>
+          isWorseDuplicate(successor, node)
+        )
+      ) {
+        openList.push(successor);
+        visitedNodesCounter++;
+      }
+    }
+
+    for (const successor of backwardSuccessorNodes) {
+      if (
+        ![...backwardOpenList, ...backwardClosedList].some((node) =>
+          isWorseDuplicate(successor, node)
+        )
+      ) {
+        backwardOpenList.push(successor);
+        visitedNodesCounter++;
+      }
+    }
 
     // Step 5: Check if the current node is the goal node
     if (isSameLocation(forwardCurrentNode, goalNode)) {
@@ -643,7 +697,7 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
       backwardPath = getPath(backwardCurrentNode).reverse();
     }
 
-    // Check for intersection
+    //Step 7: Check for intersection
     if (
       closedList.some((node) =>
         backwardClosedList.some((backwardNode) =>
@@ -704,7 +758,7 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
       return `Found path with length ${foundPath.length}`;
     }
 
-    //Whichever path finishes first
+    //Step 7: Whichever path finishes first
     if (forwardPathFound || backwardPathFound) {
       // Path found
       const endTime = performance.now();
@@ -736,35 +790,6 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
       paintCells(foundPath, "yellow"); // This now paints the entire path
       updateVisitedNodesInput(visitedNodesCounter);
       return `Found path with length ${foundPath.length}`;
-    }
-
-    // Step 6: Generate and add successors to the open
-    const forwardSuccessorNodes = propsuccessors(forwardCurrentNode, goalNode);
-    const backwardSuccessorNodes = propsuccessors(
-      backwardCurrentNode,
-      startNode
-    );
-
-    for (const successor of forwardSuccessorNodes) {
-      if (
-        ![...openList, ...closedList].some((node) =>
-          isWorseDuplicate(successor, node)
-        )
-      ) {
-        openList.push(successor);
-        visitedNodesCounter++;
-      }
-    }
-
-    for (const successor of backwardSuccessorNodes) {
-      if (
-        ![...backwardOpenList, ...backwardClosedList].some((node) =>
-          isWorseDuplicate(successor, node)
-        )
-      ) {
-        backwardOpenList.push(successor);
-        visitedNodesCounter++;
-      }
     }
 
     // Visualize exploration
@@ -802,6 +827,23 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   }
 
   // No path found
+  const endTime = performance.now();
+  const duration = endTime - startTime;
+  const minutes = Math.floor(duration / 1000 / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.floor((duration / 1000) % 60)
+    .toString()
+    .padStart(2, "0");
+  const milliseconds = Math.floor(duration % 1000)
+    .toString()
+    .padStart(3, "0");
+  const displayMilliseconds = milliseconds.substring(0, 2);
+
+  const pathTimeInput = document.getElementById("path-time");
+  if (pathTimeInput instanceof HTMLInputElement) {
+    pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`;
+  }
   return "Path not found";
 };
 
@@ -1306,9 +1348,27 @@ const tieGBFS = async (
   }
 
   // No path found
+  const endTime = performance.now();
+  const duration = endTime - startTime;
+  const minutes = Math.floor(duration / 1000 / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.floor((duration / 1000) % 60)
+    .toString()
+    .padStart(2, "0");
+  const milliseconds = Math.floor(duration % 1000)
+    .toString()
+    .padStart(3, "0");
+  const displayMilliseconds = milliseconds.substring(0, 2);
+
+  const pathTimeInput = document.getElementById("path-time");
+  if (pathTimeInput instanceof HTMLInputElement) {
+    pathTimeInput.value = `${minutes}:${seconds}.${displayMilliseconds}`;
+  }
   return "Path not found";
 };
 
+//Stock
 const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
   const openList = [startNode];
   const closedList: Cell[] = [];

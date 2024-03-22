@@ -1168,16 +1168,32 @@ const tieGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
         ...backwardPathFromIntersectionToGoal.slice(1),
       ]; // slice(1) to avoid duplicating the intersection node
 
+      // const endTime = performance.now();
+      // const duration = endTime - startTime;
+      // const adjustedDuration = calculateDuration(duration);
+      // const minutes = Math.floor(adjustedDuration / 1000 / 60)
+      //   .toString()
+      //   .padStart(2, "0");
+      // const seconds = Math.floor((adjustedDuration / 1000) % 60)
+      //   .toString()
+      //   .padStart(2, "0");
+      // const milliseconds = Math.floor(adjustedDuration % 1000)
+      //   .toString()
+      //   .padStart(3, "0");
+      // const displayMilliseconds = milliseconds.substring(0, 2);
+
+      // const pathLengthInput = document.getElementById("path-length");
+      // const pathTimeInput = document.getElementById("path-time");
+
       const endTime = performance.now();
       const duration = endTime - startTime;
-      const adjustedDuration = calculateDuration(duration);
-      const minutes = Math.floor(adjustedDuration / 1000 / 60)
+      const minutes = Math.floor(duration / 1000 / 60)
         .toString()
         .padStart(2, "0");
-      const seconds = Math.floor((adjustedDuration / 1000) % 60)
+      const seconds = Math.floor((duration / 1000) % 60)
         .toString()
         .padStart(2, "0");
-      const milliseconds = Math.floor(adjustedDuration % 1000)
+      const milliseconds = Math.floor(duration % 1000)
         .toString()
         .padStart(3, "0");
       const displayMilliseconds = milliseconds.substring(0, 2);
@@ -1200,16 +1216,29 @@ const tieGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
     //Whichever path finishes first
     if (forwardPathFound || backwardPathFound) {
       // Path found
+      // const endTime = performance.now();
+      // const duration = endTime - startTime;
+      // const adjustedDuration = calculateDuration(duration);
+      // const minutes = Math.floor(adjustedDuration / 1000 / 60)
+      //   .toString()
+      //   .padStart(2, "0");
+      // const seconds = Math.floor((adjustedDuration / 1000) % 60)
+      //   .toString()
+      //   .padStart(2, "0");
+      // const milliseconds = Math.floor(adjustedDuration % 1000)
+      //   .toString()
+      //   .padStart(3, "0");
+      // const displayMilliseconds = milliseconds.substring(0, 2);
+
       const endTime = performance.now();
       const duration = endTime - startTime;
-      const adjustedDuration = calculateDuration(duration);
-      const minutes = Math.floor(adjustedDuration / 1000 / 60)
+      const minutes = Math.floor(duration / 1000 / 60)
         .toString()
         .padStart(2, "0");
-      const seconds = Math.floor((adjustedDuration / 1000) % 60)
+      const seconds = Math.floor((duration / 1000) % 60)
         .toString()
         .padStart(2, "0");
-      const milliseconds = Math.floor(adjustedDuration % 1000)
+      const milliseconds = Math.floor(duration % 1000)
         .toString()
         .padStart(3, "0");
       const displayMilliseconds = milliseconds.substring(0, 2);

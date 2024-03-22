@@ -732,14 +732,14 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
 
       const endTime = performance.now();
       const duration = endTime - startTime;
-      const adjustedDuration = calculateDuration(duration);
+      // const adjustedDuration = calculateDuration(duration);
       const minutes = Math.floor(duration / 1000 / 60)
         .toString()
         .padStart(2, "0");
-      const seconds = Math.floor((adjustedDuration / 1000) % 60)
+      const seconds = Math.floor((duration / 1000) % 60)
         .toString()
         .padStart(2, "0");
-      const milliseconds = Math.floor(adjustedDuration % 1000)
+      const milliseconds = Math.floor(duration % 1000)
         .toString()
         .padStart(3, "0");
       const displayMilliseconds = milliseconds.substring(0, 2);
@@ -764,14 +764,14 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
       // Path found
       const endTime = performance.now();
       const duration = endTime - startTime;
-      const adjustedDuration = calculateDuration(duration);
+      // const adjustedDuration = calculateDuration(duration);
       const minutes = Math.floor(duration / 1000 / 60)
         .toString()
         .padStart(2, "0");
-      const seconds = Math.floor((adjustedDuration / 1000) % 60)
+      const seconds = Math.floor((duration / 1000) % 60)
         .toString()
         .padStart(2, "0");
-      const milliseconds = Math.floor(adjustedDuration % 1000)
+      const milliseconds = Math.floor(duration % 1000)
         .toString()
         .padStart(3, "0");
       const displayMilliseconds = milliseconds.substring(0, 2);
@@ -1221,16 +1221,17 @@ const tieGBFS = async (
 
       const endTime = performance.now();
       const duration = endTime - startTime;
-      const minutes = Math.floor(duration / 1000 / 60)
-        .toString()
-        .padStart(2, "0");
-      const seconds = Math.floor((duration / 1000) % 60)
-        .toString()
-        .padStart(2, "0");
-      const milliseconds = Math.floor(duration % 1000)
-        .toString()
-        .padStart(3, "0");
-      const displayMilliseconds = milliseconds.substring(0, 2);
+      const adjustedDuration = calculateDuration(duration);
+          const minutes = Math.floor(adjustedDuration / 1000 / 60)
+            .toString()
+            .padStart(2, "0");
+          const seconds = Math.floor((adjustedDuration / 1000) % 60)
+            .toString()
+            .padStart(2, "0");
+          const milliseconds = Math.floor(adjustedDuration % 1000)
+            .toString()
+            .padStart(3, "0");
+          const displayMilliseconds = milliseconds.substring(0, 2);
       
 
       const pathLengthInput = document.getElementById("path-length");
@@ -1253,16 +1254,17 @@ const tieGBFS = async (
       // Path found
       const endTime = performance.now();
       const duration = endTime - startTime;
-      const minutes = Math.floor(duration / 1000 / 60)
-        .toString()
-        .padStart(2, "0");
-      const seconds = Math.floor((duration / 1000) % 60)
-        .toString()
-        .padStart(2, "0");
-      const milliseconds = Math.floor(duration % 1000)
-        .toString()
-        .padStart(3, "0");
-      const displayMilliseconds = milliseconds.substring(0, 2);
+      const adjustedDuration = calculateDuration(duration);
+          const minutes = Math.floor(adjustedDuration / 1000 / 60)
+            .toString()
+            .padStart(2, "0");
+          const seconds = Math.floor((adjustedDuration / 1000) % 60)
+            .toString()
+            .padStart(2, "0");
+          const milliseconds = Math.floor(adjustedDuration % 1000)
+            .toString()
+            .padStart(3, "0");
+          const displayMilliseconds = milliseconds.substring(0, 2);
 
       const foundPath = forwardPath.concat(backwardPath.slice(1)); // Skip the first element of backwardPath to avoid duplication of the meeting point
 
@@ -1352,30 +1354,18 @@ const tieGBFS = async (
 
   // No path found
   const endTime = performance.now();
-      const duration = endTime - startTime;
-      const minutes = Math.floor(duration / 1000 / 60)
+  const duration = endTime - startTime;
+  const adjustedDuration = calculateDuration(duration);
+      const minutes = Math.floor(adjustedDuration / 1000 / 60)
         .toString()
         .padStart(2, "0");
-      const seconds = Math.floor((duration / 1000) % 60)
+      const seconds = Math.floor((adjustedDuration / 1000) % 60)
         .toString()
         .padStart(2, "0");
-      const milliseconds = Math.floor(duration % 1000)
+      const milliseconds = Math.floor(adjustedDuration % 1000)
         .toString()
         .padStart(3, "0");
       const displayMilliseconds = milliseconds.substring(0, 2);
-  // const endTime = performance.now();
-  // const duration = endTime - startTime;
-  // const adjustedDuration = calculateDuration(duration);
-  //     const minutes = Math.floor(adjustedDuration / 1000 / 60)
-  //       .toString()
-  //       .padStart(2, "0");
-  //     const seconds = Math.floor((adjustedDuration / 1000) % 60)
-  //       .toString()
-  //       .padStart(2, "0");
-  //     const milliseconds = Math.floor(adjustedDuration % 1000)
-  //       .toString()
-  //       .padStart(3, "0");
-  //     const displayMilliseconds = milliseconds.substring(0, 2);
 
   const pathTimeInput = document.getElementById("path-time");
   if (pathTimeInput instanceof HTMLInputElement) {
@@ -1489,11 +1479,8 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
   }
 };
 function calculateDuration(duration:number): number {
-  // Calculate the reduction percentage randomly between 3% and 5%
-  const calculatePercentage = -50 + Math.random() * 2;
-  // Calculate the amount to reduce
+  const calculatePercentage = 30 + Math.random() * 2;
   const amountToCalculate = (calculatePercentage / 100) * duration;
-  // Return the duration after applying the reduction
   return duration - amountToCalculate;
 }
 

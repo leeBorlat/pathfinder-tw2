@@ -849,53 +849,6 @@ const propGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   return "Path not found";
 };
 
-const propsuccessorsWithObstacles = (
-  currentNode: Node,
-  goalNode: Node,
-  obstacles: Node[]
-): Node[] => {
-  const adjacent = [
-    { x: 0, y: -1 }, // Up
-    { x: 0, y: 1 }, // Down
-    { x: -1, y: 0 }, // Left
-    { x: 1, y: 0 }, // Right
-    { x: -1, y: -1 }, // Up-Left
-    { x: 1, y: -1 }, // Up-Right
-    { x: -1, y: 1 }, // Down-Left
-    { x: 1, y: 1 }, // Down-Right
-  ];
-
-  const propsuccessorNodes = adjacent
-    .map(({ x: dx, y: dy }) => {
-      const nextX = currentNode.x + dx;
-      const nextY = currentNode.y + dy;
-      const node = getNode(nextX, nextY);
-      if (
-        node &&
-        !node.wall &&
-        !obstacles.some(
-          (obstacle) => obstacle.x === nextX && obstacle.y === nextY
-        )
-      ) {
-        return {
-          x: nextX,
-          y: nextY,
-          wall: false,
-          previous: currentNode,
-          totalCost: (currentNode.totalCost || 0) + 1,
-          heuristic: heuristicOctile(
-            { x: nextX, y: nextY, wall: false },
-            goalNode
-          ),
-        } as Node;
-      }
-      return null;
-    })
-    .filter((node): node is Node => !!node);
-
-  return propsuccessorNodes;
-};
-
 // const tieGBFS = async (
 //   startNode: Node,
 //   goalNode: Node,
@@ -1110,11 +1063,7 @@ const calculateDepth = (node: Node | undefined): number => {
   return calculateDepth(node.previous) + 1;
 };
 
-const tieGBFS = async (
-  startNode: Node,
-  goalNode: Node,
-  obstacles: Node[]
-): Promise<string> => {
+const tieGBFS = async (startNode: Node, goalNode: Node): Promise<string> => {
   let startTime: number | undefined;
   startTime = performance.now();
 
@@ -1222,17 +1171,16 @@ const tieGBFS = async (
       const endTime = performance.now();
       const duration = endTime - startTime;
       const adjustedDuration = calculateDuration(duration);
-          const minutes = Math.floor(adjustedDuration / 1000 / 60)
-            .toString()
-            .padStart(2, "0");
-          const seconds = Math.floor((adjustedDuration / 1000) % 60)
-            .toString()
-            .padStart(2, "0");
-          const milliseconds = Math.floor(adjustedDuration % 1000)
-            .toString()
-            .padStart(3, "0");
-          const displayMilliseconds = milliseconds.substring(0, 2);
-      
+      const minutes = Math.floor(adjustedDuration / 1000 / 60)
+        .toString()
+        .padStart(2, "0");
+      const seconds = Math.floor((adjustedDuration / 1000) % 60)
+        .toString()
+        .padStart(2, "0");
+      const milliseconds = Math.floor(adjustedDuration % 1000)
+        .toString()
+        .padStart(3, "0");
+      const displayMilliseconds = milliseconds.substring(0, 2);
 
       const pathLengthInput = document.getElementById("path-length");
       const pathTimeInput = document.getElementById("path-time");
@@ -1255,16 +1203,16 @@ const tieGBFS = async (
       const endTime = performance.now();
       const duration = endTime - startTime;
       const adjustedDuration = calculateDuration(duration);
-          const minutes = Math.floor(adjustedDuration / 1000 / 60)
-            .toString()
-            .padStart(2, "0");
-          const seconds = Math.floor((adjustedDuration / 1000) % 60)
-            .toString()
-            .padStart(2, "0");
-          const milliseconds = Math.floor(adjustedDuration % 1000)
-            .toString()
-            .padStart(3, "0");
-          const displayMilliseconds = milliseconds.substring(0, 2);
+      const minutes = Math.floor(adjustedDuration / 1000 / 60)
+        .toString()
+        .padStart(2, "0");
+      const seconds = Math.floor((adjustedDuration / 1000) % 60)
+        .toString()
+        .padStart(2, "0");
+      const milliseconds = Math.floor(adjustedDuration % 1000)
+        .toString()
+        .padStart(3, "0");
+      const displayMilliseconds = milliseconds.substring(0, 2);
 
       const foundPath = forwardPath.concat(backwardPath.slice(1)); // Skip the first element of backwardPath to avoid duplication of the meeting point
 
@@ -1285,15 +1233,10 @@ const tieGBFS = async (
     }
 
     // Step 6: Generate and add successors to the open
-    const forwardSuccessorNodes = propsuccessorsWithObstacles(
-      forwardCurrentNode,
-      goalNode,
-      obstacles
-    );
-    const backwardSuccessorNodes = propsuccessorsWithObstacles(
+    const forwardSuccessorNodes = propsuccessors(forwardCurrentNode, goalNode);
+    const backwardSuccessorNodes = propsuccessors(
       backwardCurrentNode,
-      startNode,
-      obstacles
+      startNode
     );
 
     for (const successor of forwardSuccessorNodes) {
@@ -1356,16 +1299,16 @@ const tieGBFS = async (
   const endTime = performance.now();
   const duration = endTime - startTime;
   const adjustedDuration = calculateDuration(duration);
-      const minutes = Math.floor(adjustedDuration / 1000 / 60)
-        .toString()
-        .padStart(2, "0");
-      const seconds = Math.floor((adjustedDuration / 1000) % 60)
-        .toString()
-        .padStart(2, "0");
-      const milliseconds = Math.floor(adjustedDuration % 1000)
-        .toString()
-        .padStart(3, "0");
-      const displayMilliseconds = milliseconds.substring(0, 2);
+  const minutes = Math.floor(adjustedDuration / 1000 / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.floor((adjustedDuration / 1000) % 60)
+    .toString()
+    .padStart(2, "0");
+  const milliseconds = Math.floor(adjustedDuration % 1000)
+    .toString()
+    .padStart(3, "0");
+  const displayMilliseconds = milliseconds.substring(0, 2);
 
   const pathTimeInput = document.getElementById("path-time");
   if (pathTimeInput instanceof HTMLInputElement) {
@@ -1478,7 +1421,7 @@ const pathFind = async (startNode: Cell, goalNode: Cell): Promise<string> => {
     }
   }
 };
-function calculateDuration(duration:number): number {
+function calculateDuration(duration: number): number {
   const calculatePercentage = 30 + Math.random() * 2;
   const amountToCalculate = (calculatePercentage / 100) * duration;
   return duration - amountToCalculate;
@@ -1665,7 +1608,7 @@ document.addEventListener("DOMContentLoaded", () => {
       paintCells([startNode], "green");
       paintCells([goalNode], "red");
 
-      tieGBFS(startNode, goalNode, obstacles).then((result) => {
+      tieGBFS(startNode, goalNode).then((result) => {
         // Pass obstacles as the third argument
         const output = document.getElementById("output");
         if (output) {
